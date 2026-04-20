@@ -13,11 +13,11 @@ This project will reinforce key concepts learned in INFO3180 including:
 
 
 ## Team Member Names and Roles
-Marissa O'Meally - Project Manager
-Gabriel Smith -
-Seantay Johnson - 
-Deshawn Matthews -
-Kevon Haughton -
+- Marissa O'Meally - Project Manager
+- Gabriel Smith -
+- Seantay Johnson - 
+- Deshawn Matthews -
+- Kevon Haughton -
 
 
 ## Setup Instructions (clear, step-by-step) 
