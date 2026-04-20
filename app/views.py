@@ -5,10 +5,10 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from app import app
+from app import app, db, login_manager
 from flask import render_template, request, jsonify, send_file
 import os
-
+from app.models import User, Location, Interest, Match, Message, Favourite, Notification 
 
 ###
 # Routing for your application.
