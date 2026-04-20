@@ -1,40 +1,40 @@
-# INFO3180 VueJS and Flask Starter
+# INFO3180 GROUP PROJECT
 
-This template should help get you started developing with Vue 3 on the frontend and Flask as an API on the backend.
+## Project Description 
+In this group project, you will develop a DATING APPLICATION web platform (called DriftDater) that allows registered users to create detailed profiles, discover compatible matches, and initiate connections with other users. The application will be built using Vue 3 frontend framework and Flask backend API, with a database to store user profiles and matching information. 
 
-## Recommended IDE Setup
+This project will reinforce key concepts learned in INFO3180 including: 
+• Relational database design 
+• RESTful API development 
+• Authentication and authorization 
+• Frontend-backend integration 
+• User interface/user experience design 
+• Testing and deployment procedures 
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.vscode-typescript-vue-plugin).
 
-## Customize configuration
+## Team Member Names and Roles
+Marissa O'Meally - Project Manager
+Gabriel Smith -
+Seantay Johnson - 
+Deshawn Matthews -
+Kevon Haughton -
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
 
-## Project Setup
+## Setup Instructions (clear, step-by-step) 
+1. Clone the starter repository 
+2. Create a Python virtual environment: python -m venv venv 
+3. Activate: source venv/bin/activate (Linux/Mac) or .\venv\Scripts\activate (Windows) 
+4. Install dependencies: pip install -r requirements.txt 
+5. Create database: flask db init, flask db migrate, flask db upgrade 
+6. Start backend: flask --app app --debug run (default: http://localhost:5000) 
+7. In new terminal, start frontend: npm install && npm run dev (default: http://localhost:5173) 
 
-```sh
-npm install
-```
 
-### Compile and Hot-Reload for Development
+## API Documentation (endpoints, parameters, responses) 
 
-```sh
-npm run dev
-```
 
-### Compile and Minify for Production
+## Deployed Application URL (if applicable) 
 
-```sh
-npm run build
-```
 
-## Start Flask API
+## Known Issues/Limitations 
 
-Remember to always create a virtual environment and install the packages in your requirements file
-
-```bash
-$ python -m venv venv (you may need to use python3 instead)
-$ source venv/bin/activate (or .\venv\Scripts\activate on Windows)
-$ pip install -r requirements.txt
-$ flask --app app --debug run
-```
