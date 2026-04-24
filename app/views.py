@@ -20,8 +20,13 @@ def index():
     return jsonify(message="This is the beginning of our API")
 
 
+# 1. User Authentication and Profile Management
 
 
+# 2. Matching System
+
+
+# 3. User Connections and Messaging
 @app.route('/api/messages', methods=['POST'])
 def send_message():
     data = request.get_json()
@@ -81,6 +86,9 @@ def get_conversations():
             users.add(m.receiver_id)
 
     return jsonify(list(users))
+
+
+# 4. Search & Discovery
 
 
 ###
