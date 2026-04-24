@@ -2,7 +2,7 @@
   <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
       <div class="container-fluid">
-        <a class="navbar-brand" href="/">VueJS with Flask</a>
+        <a class="navbar-brand" href="/">💞 DriftDater Dating App</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -15,7 +15,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto">
+          <ul class="navbar-nav mx-auto">
             <li class="nav-item">
               <RouterLink to="/" class="nav-link active">Home</RouterLink>
             </li>
