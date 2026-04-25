@@ -8,8 +8,9 @@ This file creates your application.
 from app import app, db, login_manager
 from datetime import datetime, timezone
 from flask import render_template, request, jsonify, session, send_file
+from sqlalchemy import or_
 import os
-from app.models import User, Location, Interest, Match, Message, Favourite, Notification 
+from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification 
 
 ###
 # Routing for your application.
@@ -89,8 +90,97 @@ def get_conversations():
 
 
 # 4. Search & Discovery
+@app.route('/api/users/search', methods=['GET'])
+def search_users():
+    query = User.query
+    
+    # Query parameters
+    search_word = request.args.get("q", "")
+    age =
+    cities = request.args.get('city')
+    countries = request.args.get('country')
+    selected_interests = request.args.get('interests')
+    sort_by = request.args.get('sort', default='newest')
+    
+    # Searching
+    if not search_word:
+        return jsonify([])   # return all users
+    
+    users = User.query.filter(
+        or_(
+            User.first_name.ilike(f"%{search_word}%"),
+            User.last_name.ilike(f"%{search_word}%"),
+            User.bio.ilike(f"%{search_word}%")
+        )
+    ).all()
+    
+    # Filtering location by city or country
+    query = query.join(Location)
+    
+    if cities:
+        query = query.filter(Location.city.ilike(f"{cities}"))
+    if countries:
+        query = query.filter(Location.country.ilike(f"{countries}"))
+        
+    # Filtering by Interests
+    if selected_interests:
+        query = query.join(User_Interest).filter(Interest.interestID.in_(selected_interests))
+        
+    # Sorting
+    if sort_by == "newest":
+        query = query.order_by(User.created_at.desc())
+    elif sort_by == "oldest":
+        query = query.order_by(User.created_at.asc())
+    elif sort_by == "similiar":
+        query = query.outerjoin(User_Interest) \
+            .group_by(User.userID) \
+            .order_by(db.func.count(User_Interest.interestID).desc())
 
+    
+    return jsonify([
+        {
+            "id": u.userID,
+            "name": f"{u.first_name} {u.last_name}",
+            "bio": u.bio
+        } for u in users
+    ]) 
+    
+    
+   
 
+def calculate_age(dob):
+    today = date.today()
+    
+    
+    
+
+@app.route('/api/favourites', methods=['POST'])
+def favourite_profile():
+    data = request.json
+    
+    favourite = Favourite(
+        userID=data["userID"],
+        saved_user_id=data["saved_user_id"]
+    )
+    db.session.add(favourite)
+    db.session.commit()
+    
+    return jsonify({"message": "Favourite profiles saved."}), 201
+
+@app.route('/api/favourites/<int:userID>', methods=['GET'])
+def get_favourite(user_id):
+    favourites = Favourite.query.filter_by(userID=user_id).all()
+    
+    results = [
+        {
+        "saved_user_id": f.saved_user_id
+        }
+        for f in favourites 
+    ]
+    
+    return jsonify(results)  
+    
+   
 ###
 # The functions below should be applicable to all Flask apps.
 ###

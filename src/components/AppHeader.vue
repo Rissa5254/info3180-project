@@ -2,7 +2,7 @@
   <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
       <div class="container-fluid">
-        <a class="navbar-brand" href="/">💞 DriftDater Dating App</a>
+        <a class="navbar-brand" href="/">💞 Dating App</a>
         <button
           class="navbar-toggler"
           type="button"
