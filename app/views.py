@@ -6,7 +6,7 @@ This file creates your application.
 """
 
 from app import app, db, login_manager
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from flask import render_template, request, jsonify, session, send_file
 from sqlalchemy import or_
 import os
@@ -95,36 +95,55 @@ def search_users():
     query = User.query
     
     # Query parameters
-    search_word = request.args.get("q", "")
-    age =
+    search_word = request.args.get("q")
+    min_age = request.args.get("min_age", type=int)
+    max_age = request.args.get("min_age", type=int)
     cities = request.args.get('city')
     countries = request.args.get('country')
     selected_interests = request.args.get('interests')
+    requested_gender = request.args.get('gender')
     sort_by = request.args.get('sort', default='newest')
     
     # Searching
-    if not search_word:
-        return jsonify([])   # return all users
-    
-    users = User.query.filter(
-        or_(
-            User.first_name.ilike(f"%{search_word}%"),
-            User.last_name.ilike(f"%{search_word}%"),
-            User.bio.ilike(f"%{search_word}%")
+    if search_word:
+        query = query.filter(
+            or_(
+                User.first_name.ilike(f"%{search_word}%"),
+                User.last_name.ilike(f"%{search_word}%"),
+                User.bio.ilike(f"%{search_word}%")
+            )
         )
-    ).all()
     
     # Filtering location by city or country
-    query = query.join(Location)
+    if cities or countries:
+        query = query.join(Location)
     
-    if cities:
-        query = query.filter(Location.city.ilike(f"{cities}"))
-    if countries:
-        query = query.filter(Location.country.ilike(f"{countries}"))
+        if cities:
+            query = query.filter(Location.city.ilike(f"%{cities}%"))
+        if countries:
+            query = query.filter(Location.country.ilike(f"%{countries}%"))
+    
+    # Age Range 
+    today = date.today()
+    
+    if min_age:
+        max_dob = today - timedelta(days=min_age * 365)
+        query = query.filter(User.date_of_birth >= max_dob)
+    
+    if max_age:
+        min_dob = today - timedelta(days=max_age * 365)
+        query = query.filter(User.date_of_birth >= min_dob)
         
     # Filtering by Interests
     if selected_interests:
-        query = query.join(User_Interest).filter(Interest.interestID.in_(selected_interests))
+        interest_ids = [int(i) for i in interest_ids.split(',')]
+        query = query.join(User_Interest).filter(User_Interest.interestID.in_(interest_ids))
+    
+    # Additional Criteria (gender & profile visibility)
+    if requested_gender:
+        query = query.filter(User.gender == requested_gender)
+    
+    query = query.filter(User.profile_visibility == 'public')
         
     # Sorting
     if sort_by == "newest":
@@ -135,23 +154,25 @@ def search_users():
         query = query.outerjoin(User_Interest) \
             .group_by(User.userID) \
             .order_by(db.func.count(User_Interest.interestID).desc())
-
     
+    # Execute query 
+    users = query.all()
+    
+    def calculate_age(dob):
+        if not dob:
+            return None 
+        return today.year - dob.year - (
+            (today.month, today.day) < (dob.moth, dob.day)
+        )
+
     return jsonify([
         {
             "id": u.userID,
             "name": f"{u.first_name} {u.last_name}",
-            "bio": u.bio
+            "bio": u.bio,
+            "age": calculate_age(u.date_of_birth)
         } for u in users
     ]) 
-    
-    
-   
-
-def calculate_age(dob):
-    today = date.today()
-    
-    
     
 
 @app.route('/api/favourites', methods=['POST'])
@@ -159,7 +180,7 @@ def favourite_profile():
     data = request.json
     
     favourite = Favourite(
-        userID=data["userID"],
+        user_id=data["userID"],
         saved_user_id=data["saved_user_id"]
     )
     db.session.add(favourite)
