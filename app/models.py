@@ -1,12 +1,11 @@
 # Marissa O'Meally
 # Add any model classes for Flask-SQLAlchemy here
-
 from . import db
 from datetime import datetime, timezone
-from werkzeug.security import generate_password_hash
-
-
-class User(db.Model):
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+#Deshawn added UserMixin
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
     
     userID = db.Column(db.Integer, primary_key=True)
@@ -50,24 +49,19 @@ class User(db.Model):
         self.locationID = locationID
         self.preferred_radius = preferred_radius
         self.profile_picture = profile_picture
+        
+        
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+    
 
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
 
     def get_id(self):
-        try:
-            return unicode(self.id)  # python 2 support
-        except NameError:
-            return str(self.id)  # python 3 support
-
+        return str(self.userID)
     def __repr__(self):
         return '<User %r>' % (self.username)
+    
+    
     
 
 class Location(db.Model):
