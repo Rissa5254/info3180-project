@@ -7,14 +7,20 @@ This file creates your application.
 
 from app import app, db, login_manager
 from datetime import date, datetime, timedelta, timezone
-from flask import render_template, request, jsonify, session, send_file
+from flask import render_template, request, jsonify, session, send_file, current_app
+from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import or_
 import os
 from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification 
-
+from werkzeug.security import check_password_hash
+from werkzeug.utils import secure_filename
 ###
 # Routing for your application.
 ###
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
@@ -22,8 +28,318 @@ def index():
 
 
 # 1. User Authentication and Profile Management
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+
+    username = data.get('username', '').strip()
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+    date_of_birth = data.get('date_of_birth')
+    gender = data.get('gender')
+    looking_for = data.get('looking_for')
+
+    if not username or not email or not password:
+        return jsonify({
+            "error": "Username, email, and password are required."
+        }), 400
+
+    if len(password) < 8:
+        return jsonify({
+            "error": "Password must be at least 8 characters."
+        }), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({
+            "error": "Username already exists."
+        }), 409
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({
+            "error": "Email already exists."
+        }), 409
+
+    dob_value = None
+
+    if date_of_birth:
+        try:
+            dob_value = datetime.strptime(date_of_birth, "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({
+                "error": "Date of birth must be in YYYY-MM-DD format."
+            }), 400
+
+    user = User(
+        username=username,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=password,
+        date_of_birth=dob_value,
+        gender=gender,
+        looking_for=looking_for,
+        bio=None,
+        locationID=None,
+        preferred_radius=None,
+        profile_picture=None,
+        profile_visibility=True
+    )
+
+    db.session.add(user)
+    db.session.commit()
+
+    login_user(user)
+
+    session['user_id'] = user.userID
+
+    return jsonify({
+        "message": "Registration successful.",
+        "user": {
+            "userID": user.userID,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
+        }
+    }), 201
+    
+    
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+
+    if not email or not password:
+        return jsonify({
+            "error": "Email and password are required."
+        }), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if user is None or not user.check_password(password):
+        return jsonify({
+            "error": "Invalid email or password."
+        }), 401
+
+    login_user(user)
+
+    session['user_id'] = user.userID
+
+    return jsonify({
+        "message": "Login successful.",
+        "user": {
+            "userID": user.userID,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
+        }
+    }), 200
 
 
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    session.pop('user_id', None)
+
+    return jsonify({
+        "message": "Logout successful."
+    }), 200
+    
+    
+    
+@app.route('/api/auth/check', methods=['GET'])
+def check_auth():
+    if not current_user.is_authenticated:
+        return jsonify({
+            "authenticated": False,
+            "user": None
+        }), 401
+
+    return jsonify({
+        "authenticated": True,
+        "user": {
+            "userID": current_user.userID,
+            "username": current_user.username,
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name,
+            "email": current_user.email
+        }
+    }), 200
+    
+    
+    
+@app.route('/api/profile', methods=['GET'])
+@login_required
+def get_profile():
+    user = current_user
+
+    user_interests = Interest.query \
+        .join(User_Interest, Interest.interestID == User_Interest.interestID) \
+        .filter(User_Interest.userID == user.userID) \
+        .all()
+
+    return jsonify({
+        "userID": user.userID,
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "date_of_birth": user.date_of_birth.isoformat() if user.date_of_birth else None,
+        "gender": user.gender,
+        "looking_for": user.looking_for,
+        "bio": user.bio,
+        "profile_visibility": user.profile_visibility,
+        "preferred_radius": user.preferred_radius,
+        "profile_picture": user.profile_picture,
+        "interests": [
+            interest.interest_name for interest in user_interests
+        ]
+    }), 200
+    
+@app.route('/api/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    data = request.get_json()
+
+    current_user.first_name = data.get('first_name', current_user.first_name)
+    current_user.last_name = data.get('last_name', current_user.last_name)
+    current_user.bio = data.get('bio', current_user.bio)
+    current_user.gender = data.get('gender', current_user.gender)
+    current_user.looking_for = data.get('looking_for', current_user.looking_for)
+    current_user.preferred_radius = data.get('preferred_radius', current_user.preferred_radius)
+
+    if 'profile_visibility' in data:
+        current_user.profile_visibility = bool(data.get('profile_visibility'))
+
+    if data.get('date_of_birth'):
+        try:
+            current_user.date_of_birth = datetime.strptime(
+                data.get('date_of_birth'),
+                "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            return jsonify({
+                "error": "Date of birth must be in YYYY-MM-DD format."
+            }), 400
+
+    interests = data.get('interests', None)
+
+    if interests is not None:
+        cleaned_interests = []
+
+        for interest_name in interests:
+            interest_name = interest_name.strip().lower()
+
+            if interest_name and interest_name not in cleaned_interests:
+                cleaned_interests.append(interest_name)
+
+        if len(cleaned_interests) < 3:
+            return jsonify({
+                "error": "Please enter at least 3 interests."
+            }), 400
+
+        User_Interest.query.filter_by(userID=current_user.userID).delete()
+
+        for interest_name in cleaned_interests:
+            interest = Interest.query.filter_by(interest_name=interest_name).first()
+
+            if interest is None:
+                interest = Interest(interest_name=interest_name)
+                db.session.add(interest)
+                db.session.flush()
+
+            user_interest = User_Interest(
+                userID=current_user.userID,
+                interestID=interest.interestID
+            )
+
+            db.session.add(user_interest)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profile updated successfully."
+    }), 200
+    
+    
+@app.route('/api/users/browse', methods=['GET'])
+@login_required
+def browse_users():
+    users = User.query.filter(
+        User.userID != current_user.userID,
+        User.profile_visibility == True
+    ).order_by(User.created_at.desc()).all()
+
+    today = date.today()
+
+    def calculate_age(dob):
+        if not dob:
+            return None
+
+        return today.year - dob.year - (
+            (today.month, today.day) < (dob.month, dob.day)
+        )
+
+    results = []
+
+    for user in users:
+        interests = Interest.query \
+            .join(User_Interest, Interest.interestID == User_Interest.interestID) \
+            .filter(User_Interest.userID == user.userID) \
+            .all()
+
+        results.append({
+            "userID": user.userID,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "age": calculate_age(user.date_of_birth),
+            "gender": user.gender,
+            "looking_for": user.looking_for,
+            "bio": user.bio,
+            "profile_picture": user.profile_picture,
+            "interests": [interest.interest_name for interest in interests]
+        })
+
+    return jsonify(results), 200
+    
+    
+    
+@app.route('/api/profile/picture', methods=['POST'])
+@login_required
+def upload_profile_picture():
+    if 'profile_picture' not in request.files:
+        return jsonify({"error": "No profile picture uploaded."}), 400
+
+    file = request.files['profile_picture']
+
+    if file.filename == '':
+        return jsonify({"error": "No selected file."}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Only png, jpg, jpeg, and webp files are allowed."}), 400
+
+    filename = secure_filename(file.filename)
+
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+
+    file_path = os.path.join(upload_folder, filename)
+    file.save(file_path)
+
+    current_user.profile_picture = filename
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profile picture uploaded successfully.",
+        "profile_picture": filename
+    }), 200
 # 2. Matching System
 
 

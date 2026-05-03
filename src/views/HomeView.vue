@@ -32,12 +32,15 @@ It also allows you to create detailed profiles, discover compatible matches and 
 .title{
   margin-top: 20px;
   font-family: Georgia, 'Times New Roman', Times, serif;
+  color: #7a1236;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .subtitle{
   font-size: 20px;
   font-weight: 300;
   font-style: italic;
+  color: #6a2a3d;
 }
 
 .hearts {
