@@ -44,10 +44,10 @@ It also allows you to create detailed profiles, discover compatible matches and 
 }
 
 .hearts {
+  position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 1;
 }
 
 .heart{
@@ -57,9 +57,9 @@ It also allows you to create detailed profiles, discover compatible matches and 
   font-size: 24px;
 }
 
-.heart:nth-child(1) { top: 35%; left: 10%; }
+.heart:nth-child(1) { top: 30%; left: 10%; }
 .heart:nth-child(2) { top: 90%; left: 85%;  }
-.heart:nth-child(3) { top: 35%; left: 85%; }
+.heart:nth-child(3) { top: 30%; left: 85%; }
 .heart:nth-child(4) { top: 90%; left: 10%; }
 
 @keyframes floatUp {

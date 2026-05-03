@@ -459,7 +459,7 @@ def search_users():
     if requested_gender:
         query = query.filter(User.gender == requested_gender)
     
-    query = query.filter(User.profile_visibility == 'public')
+    query = query.filter(User.profile_visibility == True)
         
     # Sorting
     if sort_by == "newest":
@@ -478,7 +478,7 @@ def search_users():
         if not dob:
             return None 
         return today.year - dob.year - (
-            (today.month, today.day) < (dob.moth, dob.day)
+            (today.month, today.day) < (dob.month, dob.day)
         )
 
     return jsonify([
@@ -505,8 +505,8 @@ def favourite_profile():
     return jsonify({"message": "Favourite profiles saved."}), 201
 
 @app.route('/api/favourites/<int:userID>', methods=['GET'])
-def get_favourite(user_id):
-    favourites = Favourite.query.filter_by(userID=user_id).all()
+def get_favourite(userID):
+    favourites = Favourite.query.filter_by(userID=userID).all()
     
     results = [
         {
