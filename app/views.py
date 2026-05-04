@@ -9,6 +9,7 @@ from app import app, db, login_manager
 from flask import render_template, request, jsonify, send_file
 import os
 from app.models import User, Location, Interest, Match, Message, Favourite, Notification 
+from flask_login import current_user
 
 ###
 # Routing for your application.
@@ -61,3 +62,47 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
+
+from flask_login import current_user
+
+@app.route('/api/messages/<int:receiver_id>', methods=['GET'])
+def get_messages(receiver_id):
+    # Find the match between current user and receiver
+    match = Match.query.filter(
+        ((Match.user1_id == current_user.userID) & (Match.user2_id == receiver_id)) |
+        ((Match.user1_id == receiver_id) & (Match.user2_id == current_user.userID))
+    ).first()
+
+    if not match:
+        return jsonify([])
+
+    msgs = Message.query.filter_by(matchID=match.matchID).order_by(Message.timestamp).all()
+    return jsonify([
+        {
+            'messageID': m.messageID,
+            'senderID': m.senderID,
+            'content': m.content,
+            'timestamp': m.timestamp.isoformat()
+        } for m in msgs
+    ])
+
+@app.route('/api/messages', methods=['POST'])
+def send_message():
+    data = request.get_json()
+    receiver_id = data.get('receiver_id')
+    content = data.get('content')
+
+    match = Match.query.filter(
+        ((Match.user1_id == current_user.userID) & (Match.user2_id == receiver_id)) |
+        ((Match.user1_id == receiver_id) & (Match.user2_id == current_user.userID))
+    ).first()
+
+    if not match:
+        return jsonify({'error': 'No match found'}), 404
+
+    msg = Message(matchID=match.matchID, senderID=current_user.userID, content=content)
+    db.session.add(msg)
+    db.session.commit()
+
+    return jsonify({'message': 'Sent'}), 201
+
