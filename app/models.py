@@ -4,6 +4,7 @@ from . import db
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+
 #Deshawn added UserMixin
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
