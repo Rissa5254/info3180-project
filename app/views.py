@@ -341,65 +341,106 @@ def upload_profile_picture():
 
 # 3. User Connections and Messaging
 @app.route('/api/messages', methods=['POST'])
+@login_required
 def send_message():
     data = request.get_json()
-    sender_id = session.get('user_id')
 
     receiver_id = data.get('receiver_id')
-    content = data.get('content')
+    content = data.get('content', '').strip()
 
-    if not is_matched(sender_id, receiver_id):
-        return jsonify({"error": "Users not matched"}), 403
+    if not receiver_id:
+        return jsonify({"error": "Receiver ID required"}), 400
 
-    message = Message(
-        sender_id=sender_id,
-        receiver_id=receiver_id,
-        content=content,
-        timestamp=datetime.now(timezone.utc)
+    if not content:
+        return jsonify({"error": "Empty message"}), 400
+
+    receiver = User.query.get(receiver_id)
+    if not receiver:
+        return jsonify({"error": "User not found"}), 404
+
+    match = Match.query.filter(
+        ((Match.user1_id == current_user.userID) & (Match.user2_id == receiver_id)) |
+        ((Match.user1_id == receiver_id) & (Match.user2_id == current_user.userID))
+    ).first()
+
+    if not match:
+        return jsonify({"error": "No match"}), 403
+
+    msg = Message(
+        matchID=match.matchID,
+        senderID=current_user.userID,
+        content=content
     )
 
-    db.session.add(message)
+    db.session.add(msg)
     db.session.commit()
 
-    return jsonify({"message": "Message sent"}), 201
+    return jsonify({"message": "Sent"}), 201
 
-@app.route('/api/messages/<int:user_id>', methods=['GET'])
-def get_messages(user_id):
-    current_user = session.get('user_id')
+@app.route('/api/messages/<int:receiver_id>', methods=['GET'])
+@login_required
+def get_messages(receiver_id):
 
-    messages = Message.query.filter(
-        ((Message.sender_id == current_user) & (Message.receiver_id == user_id)) |
-        ((Message.sender_id == user_id) & (Message.receiver_id == current_user))
-    ).order_by(Message.timestamp.asc()).all()
+    receiver = User.query.get(receiver_id)
+    if not receiver:
+        return jsonify({"error": "User not found"}), 404
+
+    match = Match.query.filter(
+        ((Match.user1_id == current_user.userID) & (Match.user2_id == receiver_id)) |
+        ((Match.user1_id == receiver_id) & (Match.user2_id == current_user.userID))
+    ).first()
+
+    if not match:
+        return jsonify({"error": "No match"}), 403
+
+    msgs = Message.query \
+        .filter_by(matchID=match.matchID) \
+        .order_by(Message.timestamp.asc()) \
+        .all()
 
     return jsonify([
         {
-            "sender_id": m.sender_id,
-            "receiver_id": m.receiver_id,
+            "messageID": m.messageID,
+            "senderID": m.senderID,
             "content": m.content,
-            "timestamp": m.timestamp
+            "timestamp": m.timestamp.isoformat()
         }
-        for m in messages
-    ])
+        for m in msgs
+    ]), 200
 
 @app.route('/api/conversations', methods=['GET'])
+@login_required
 def get_conversations():
-    current_user = session.get('user_id')
 
-    messages = Message.query.filter(
-        (Message.sender_id == current_user) |
-        (Message.receiver_id == current_user)
+    matches = Match.query.filter(
+        (Match.user1_id == current_user.userID) |
+        (Match.user2_id == current_user.userID)
     ).all()
 
-    users = set()
-    for m in messages:
-        if m.sender_id != current_user:
-            users.add(m.sender_id)
-        if m.receiver_id != current_user:
-            users.add(m.receiver_id)
+    conversations = []
 
-    return jsonify(list(users))
+    for m in matches:
+        other_user_id = (
+            m.user2_id if m.user1_id == current_user.userID
+            else m.user1_id
+        )
 
+        other_user = User.query.get(other_user_id)
+
+        last_message = Message.query \
+            .filter_by(matchID=m.matchID) \
+            .order_by(Message.timestamp.desc()) \
+            .first()
+
+        conversations.append({
+            "userID": other_user.userID,
+            "username": other_user.username,
+            "profile_picture": other_user.profile_picture,
+            "last_message": last_message.content if last_message else None,
+            "timestamp": last_message.timestamp.isoformat() if last_message else None
+        })
+
+    return jsonify(conversations), 200
 
 # 4. Search & Discovery
 @app.route('/api/users/search', methods=['GET'])
@@ -557,41 +598,3 @@ def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
 
-@app.route('/api/messages', methods=['POST'])
-def send_message():
-    data = request.get_json()
-    receiver_id = data.get('receiver_id')
-    content = data.get('content')
-
-    match = Match.query.filter(
-        ((Match.user1_id == current_user.userID) & (Match.user2_id == receiver_id)) |
-        ((Match.user1_id == receiver_id) & (Match.user2_id == current_user.userID))
-    ).first()
-
-    if not match:
-        return jsonify({'error': 'No match found'}), 404
-
-    msg = Message(matchID=match.matchID, senderID=current_user.userID, content=content)
-    db.session.add(msg)
-    db.session.commit()
-    return jsonify({'message': 'Sent'}), 201
-
-@app.route('/api/messages/<int:receiver_id>', methods=['GET'])
-def get_messages(receiver_id):
-    match = Match.query.filter(
-        ((Match.user1_id == current_user.userID) & (Match.user2_id == receiver_id)) |
-        ((Match.user1_id == receiver_id) & (Match.user2_id == current_user.userID))
-    ).first()
-
-    if not match:
-        return jsonify([])
-
-    msgs = Message.query.filter_by(matchID=match.matchID).order_by(Message.timestamp).all()
-    return jsonify([
-        {
-            'messageID': m.messageID,
-            'senderID': m.senderID,
-            'content': m.content,
-            'timestamp': m.timestamp.isoformat()
-        } for m in msgs
-    ])
