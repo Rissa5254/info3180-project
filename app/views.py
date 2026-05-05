@@ -5,10 +5,16 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification
-from flask_login import current_user
+import os
+from app import app, db
+from datetime import date, datetime, timezone, timedelta
+from flask import flash, current_app, render_template, request, session, jsonify
+from flask_login import current_user, login_user, logout_user, login_required
+from sqlalchemy import or_
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
+from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification
+
 
 ###
 # Routing for your application.
@@ -148,7 +154,6 @@ def logout():
     }), 200
     
     
-    
 @app.route('/api/auth/check', methods=['GET'])
 def check_auth():
     if not current_user.is_authenticated:
@@ -167,7 +172,6 @@ def check_auth():
             "email": current_user.email
         }
     }), 200
-    
     
     
 @app.route('/api/profile', methods=['GET'])
@@ -197,6 +201,7 @@ def get_profile():
             interest.interest_name for interest in user_interests
         ]
     }), 200
+    
     
 @app.route('/api/profile', methods=['PUT'])
 @login_required
@@ -304,8 +309,7 @@ def browse_users():
         })
 
     return jsonify(results), 200
-    
-    
+     
     
 @app.route('/api/profile/picture', methods=['POST'])
 @login_required
@@ -336,7 +340,13 @@ def upload_profile_picture():
         "message": "Profile picture uploaded successfully.",
         "profile_picture": filename
     }), 200
+    
+    
 # 2. Matching System
+
+
+
+
 
 
 # 3. User Connections and Messaging
