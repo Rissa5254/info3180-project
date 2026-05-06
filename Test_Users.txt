@@ -1,0 +1,289 @@
+User Test Data used to test features
+
+JSON Scripts
+[
+  {
+    "user_id": "1",
+    "username": "lora",
+    "first_name": "Lora",
+    "last_name" : "Micheals",
+    "email": "lora123@gmail.com",
+    "password": "s1m2i3t4h5",
+    "date_of_birth": "2004-09-09",
+    "gender": "Female",
+    "looking_for": "Male",
+    "preferred_radius": "15",
+    "bio": "Hello, I'm Lora.  A 21 year old, final year university student hoping to find someone interesting.",
+    "interests": ["music", "nature", "long walks on the beach"]
+  },
+
+  {
+    "user_id": "2",
+    "username": "maya_j",
+    "first_name": "Maya",
+    "last_name" : "Johnson",
+    "email": "maya.johnson@example.com",
+    "password": "Password123",
+    "date_of_birth": "2002-05-14",
+    "gender": "Female",
+    "looking_for": "Male",
+    "preferred_radius": "10",
+    "bio": "Maya is a friendly and creative person who enjoys good conversations, trying new food, and relaxing with movies.",
+    "interests": ["music", "cooking", "movies"]
+  },
+
+  {
+    "user_id": "3",
+    "username": "daniel_b",
+    "first_name": "Daniel",
+    "last_name" : "Brown",
+    "email": "daniel.brown@example.com",
+    "password": "Password123",
+    "date_of_birth": "2001-09-22",
+    "gender": "Male",
+    "looking_for": "Female",
+    "preferred_radius": "15",
+    "bio": "Daniel is outgoing and enjoys staying active, playing sports, and exploring new places on weekends.",
+    "interests": ["football", "fitness", "travel"]
+  },
+
+  {
+    "user_id": "4",
+    "username": "alia_s",
+    "first_name": "Alia",
+    "last_name" : "Smith",   
+    "email": "alia.smith@example.com",
+    "password": "Password123",
+    "date_of_birth": "2003-01-08",
+    "gender": "Female",
+    "looking_for": "Male",
+    "preferred_radius": "8",
+    "bio": "Alia enjoys quiet moments, reading books, and connecting with thoughtful and kind people.",
+    "interests": ["reading", "painting", "coffee"]
+  },
+
+  {
+    "user_id": "5",
+    "username": "kevon_w",
+    "first_name": "Kevon",
+    "last_name" : "Williams",
+    "email": "kevon.williams@example.com",
+    "password": "Password123",
+    "date_of_birth": "2000-11-30",
+    "gender": "Male",
+    "looking_for": "Female",
+    "preferred_radius": "20",
+    "bio": "Kevon is laid back and enjoys music, gaming, and having a good laugh with friends.",
+    "interests": ["gaming", "music", "comedy"]
+  },
+
+  {
+    "user_id": "6",
+    "username": "brianna_c",
+    "first_name": "Brianna",
+    "last_name" : "Campbell",
+    "email": "brianna.campbell@example.com",
+    "password": "Password123",
+    "date_of_birth": "2002-07-19",
+    "gender": "Female",
+    "looking_for": "Male",
+    "preferred_radius": "12",
+    "bio": "Brianna is ambitious and enjoys spending time outdoors and meeting people with good energy.",
+    "interests": ["beach", "photography", "food"]
+  },
+
+  {
+    "user_id": "7",
+    "username": "jason_m",
+    "first_name": "Jason",
+    "last_name" : "Miller",
+    "email": "jason.miller@example.com",
+    "password": "Password123",
+    "date_of_birth": "1999-03-11",
+    "gender": "Male",
+    "looking_for": "Female",
+    "preferred_radius": "25",
+    "bio": "Jason is calm and enjoys movies, technology, and deep conversations about life.",
+    "interests": ["technology", "movies", "basketball"]
+  },
+
+  {
+    "user_id": "8",
+    "username": "nia_t",
+    "first_name": "Nia",
+    "last_name" : "Thompson",
+    "email": "nia.thompson@example.com",
+    "password": "Password123",
+    "date_of_birth": "2001-12-04",
+    "gender": "Female",
+    "looking_for": "Male",
+    "preferred_radius": "10",
+    "bio": "Nia is cheerful and enjoys dancing, fashion, and trying new experiences.",
+    "interests": ["dancing", "fashion", "restaurants"]
+  },
+
+  {
+    "user_id": "9",
+    "username": "andre_r",
+    "first_name": "Andre",
+    "last_name" : "Robinson",
+    "email": "andre.robinson@example.com",
+    "password": "Password123",
+    "date_of_birth": "2000-06-27",
+    "gender": "Male",
+    "looking_for": "Female",
+    "preferred_radius": "18",
+    "bio": "Andre enjoys staying active, learning new things, and meeting genuine people.",
+    "interests": ["gym", "reading", "music"]
+  },
+
+  {
+    "user_id": "10",
+    "username": "shanice_g",
+    "first_name": "Shanice",
+    "last_name" : "Grant",
+    "email": "shanice.grant@example.com",
+    "password": "Password123",
+    "date_of_birth": "2003-10-16",
+    "gender": "Female",
+    "looking_for": "Male",
+    "preferred_radius": "15",
+    "bio": "Shanice is creative and enjoys music, journaling, and peaceful evenings.",
+    "interests": ["journaling", "music", "baking"]
+  },
+
+  {
+    "user_id": "11",
+    "username": "malik_h",
+    "first_name": "Malik",
+    "last_name" : "Henry", 
+    "email": "malik.henry@example.com",
+    "password": "Password123",
+    "date_of_birth": "1998-08-05",
+    "gender": "Male",
+    "looking_for": "Female",
+    "preferred_radius": "30",
+    "bio": "Malik is adventurous and enjoys traveling, sports, and meeting new people.",
+    "interests": ["travel", "cricket", "movies"]
+  }, 
+
+  {
+    "user_id": "12",
+    "username": "leah_k",
+    "first_name": "Leah",
+    "last_name": "Knight",
+    "email": "leah.knight@example.com",
+    "password": "Password123",
+    "date_of_birth": "2001-04-12",
+    "gender": "Female",
+    "looking_for": "Female",
+    "preferred_radius": "12",
+    "bio": "Leah is calm, thoughtful, and enjoys deep conversations, music, and quiet evenings.",
+    "interests": ["music", "reading", "art"]
+  },
+
+  {
+    "user_id": "13",
+    "username": "tasha_r",
+    "first_name": "Tasha",
+    "last_name": "Reid",
+    "email": "tasha.reid@example.com",
+    "password": "Password123",
+    "date_of_birth": "2002-08-25",
+    "gender": "Female",
+    "looking_for": "Female",
+    "preferred_radius": "10",
+    "bio": "Tasha is energetic and fun, always up for trying new food spots and exploring new places.",
+    "interests": ["food", "travel", "fitness"]
+  },
+
+  {
+    "user_id": "14",
+    "username": "kiara_s",
+    "first_name": "Kiara",
+    "last_name": "Scott",
+    "email": "kiara.scott@example.com",
+    "password": "Password123",
+    "date_of_birth": "2003-02-03",
+    "gender": "Female",
+    "looking_for": "Female",
+    "preferred_radius": "8",
+    "bio": "Kiara enjoys creative hobbies and meeting people who are genuine and expressive.",
+    "interests": ["painting", "fashion", "photography"]
+  },
+
+  {
+    "user_id": "15",
+    "username": "devon_l",
+    "first_name": "Devon",
+    "last_name": "Lewis",
+    "email": "devon.lewis@example.com",
+    "password": "Password123",
+    "date_of_birth": "2000-06-18",
+    "gender": "Male",
+    "looking_for": "Male",
+    "preferred_radius": "15",
+    "bio": "Devon is laid back and enjoys gaming, music, and spending time with friends.",
+    "interests": ["gaming", "music", "movies"]
+  },
+
+  {
+    "user_id": "16",
+    "username": "marcus_f",
+    "first_name": "Marcus",
+    "last_name": "Foster",
+    "email": "marcus.foster@example.com",
+    "password": "Password123",
+    "date_of_birth": "1999-11-07",
+    "gender": "Male",
+    "looking_for": "Male",
+    "preferred_radius": "20",
+    "bio": "Marcus is confident and enjoys staying active, traveling, and meeting new people.",
+    "interests": ["gym", "travel", "sports"]
+  },
+
+  {
+    "user_id": "17",
+    "username": "andre_c",
+    "first_name": "Andre",
+    "last_name": "Clarke",
+    "email": "andre.clarke@example.com",
+    "password": "Password123",
+    "date_of_birth": "2001-09-14",
+    "gender": "Male",
+    "looking_for": "Male",
+    "preferred_radius": "18",
+    "bio": "Andre is easygoing and enjoys good conversation, music, and relaxed weekends.",
+    "interests": ["music", "reading", "chilling"]
+  },
+
+  {
+    "user_id": "18",
+    "username": "rachel_p",
+    "first_name": "Rachel",
+    "last_name": "Palmer",
+    "email": "rachel.palmer@example.com",
+    "password": "Password123",
+    "date_of_birth": "2002-03-09",
+    "gender": "Female",
+    "looking_for": "Female",
+    "preferred_radius": "14",
+    "bio": "Rachel is warm and easygoing, enjoys meaningful conversations and spending time outdoors with good company.",
+    "interests": ["hiking", "music", "movies"]
+  },
+
+  {
+    "user_id": "19",
+    "username": "keith_j",
+    "first_name": "Keith",
+    "last_name": "Johnson",
+    "email": "keith.johnson@example.com",
+    "password": "Password123",
+    "date_of_birth": "2000-10-21",
+    "gender": "Male",
+    "looking_for": "Male",
+    "preferred_radius": "16",
+    "bio": "Keith is outgoing and enjoys social events, sports, and meeting people who are confident and fun.",
+    "interests": ["football", "gym", "parties"]
+  }
+]

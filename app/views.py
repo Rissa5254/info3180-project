@@ -564,6 +564,178 @@ def get_favourite(userID):
     
     return jsonify(results)  
     
+
+# 5. Notification
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+
+#Return all notifications for logged in user (newest first)
+def get_notifications():
+    notifications = Notification.query.filter_by(userID=current_user.userID) \
+        .order_by(Notification.created_at.desc()) \
+        .all()
+
+    results = []
+
+    for notification in notifications:
+        results.append({
+            "notificationID": notification.notificationID,
+            "type": notification.type,
+            "content": notification.content,
+            "is_read": notification.is_read,
+            "created_at": notification.created_at.isoformat() if notification.created_at else None
+        })
+
+    return jsonify(results), 200
+
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['PUT'])
+@login_required
+
+#Marks notifications as read
+def mark_notification_read(notification_id):
+    notification = Notification.query.filter_by(
+        notificationID=notification_id,
+        userID=current_user.userID
+    ).first()
+
+    # Checking if Notification exists
+    if not notification:
+        return jsonify({"error": "Notification not found."}), 404
+
+    notification.is_read = True
+    db.session.commit()
+
+    return jsonify({"message": "Notification marked as read."}), 200
+   
+
+# 6. Block User
+@app.route('/api/users/<int:user_id>/block', methods=['POST'])
+@login_required
+
+#Blocks user and prevents them from appear in browse results
+def block_user(user_id):
+
+    #Prevents a user from blocking themself
+    if user_id == current_user.userID:
+        return jsonify({"error": "You cannot block yourself."}), 400
+
+    user_to_block = User.query.get(user_id)
+
+    #Checking if a user exists
+    if not user_to_block:
+        return jsonify({"error": "User not found."}), 404
+
+    existing_block = Block.query.filter_by(
+        blockerID=current_user.userID,
+        blockedID=user_id
+    ).first()
+ 
+    #Checking if a user is already blocked
+    if existing_block:
+        return jsonify({"error": "User already blocked."}), 409
+
+    block = Block(
+        blockerID=current_user.userID,
+        blockedID=user_id
+    )
+
+    db.session.add(block)
+    db.session.commit()
+
+    return jsonify({"message": "User blocked successfully."}), 201
+
+
+# View Blocked List
+@app.route('/api/users/blocked', methods=['GET'])
+@login_required
+def get_blocked_users():
+    blocks = Block.query.filter_by(blockerID=current_user.userID).all()
+
+    results = []
+
+    for block in blocks:
+        user = User.query.get(block.blockedID)
+        if user:
+            results.append({
+                "userID": user.userID,
+                "username": user.username,
+                "email": user.email
+            })
+
+    return jsonify(results), 200
+
+
+# Unblock User
+@app.route('/api/users/<int:user_id>/unblock', methods=['DELETE'])
+@login_required
+
+#Unblocks user so they appear in your browse results again
+def unblock_user(user_id):
+    block = Block.query.filter_by(
+        blockerID=current_user.userID,
+        blockedID=user_id
+    ).first()
+
+    #Checks if user wasn't blocked
+    if not block:
+        return jsonify({"error": "User not blocked."}), 404
+
+    db.session.delete(block)
+    db.session.commit()
+
+    return jsonify({"message": "User unblocked successfully."}), 200
+
+
+# 7. Report User
+@app.route('/api/users/<int:user_id>/report', methods=['POST'])
+@login_required
+
+# Allows a user to report another with a reason
+def report_user(user_id):
+
+    #Prevents a user from reporting themself
+    if user_id == current_user.userID:
+        return jsonify({"error": "You cannot report yourself."}), 400
+
+    user_to_report = User.query.get(user_id)
+
+    #Checks if user exists
+    if not user_to_report:
+        return jsonify({"error": "User not found."}), 404
+
+    data = request.get_json()
+    reason = data.get("reason", "").strip()
+
+    # Required check
+    if not reason:
+        return jsonify({"error": "Reason is required."}), 400
+
+    # Length validation
+    if len(reason) < 5:
+        return jsonify({"error": "Reason too short."}), 400
+
+    # Duplicate report prevention
+    existing_report = Report.query.filter_by(
+        reporterID=current_user.userID,
+        reportedID=user_id
+    ).first()
+
+    if existing_report:
+        return jsonify({"error": "User already reported."}), 409
+
+    report = Report(
+        reporterID=current_user.userID,
+        reportedID=user_id,
+        reason=reason
+    )
+
+    db.session.add(report)
+    db.session.commit()
+
+    return jsonify({"message": "User reported successfully."}), 201
+
+
    
 ###
 # The functions below should be applicable to all Flask apps.

@@ -62,8 +62,6 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<User %r>' % (self.username)
     
-    
-    
 
 class Location(db.Model):
     __tablename__ = 'location'
@@ -147,7 +145,8 @@ class Favourite(db.Model):
         self.userID = userID
         self.saved_user_id = saved_user_id
         
-        
+
+#Stores notifications sent to users (matches, alerts, etc...)        
 class Notification(db.Model):
     __tablename__ = 'notifications'
     
@@ -162,5 +161,35 @@ class Notification(db.Model):
         self.userID = userID
         self.type = type
         self.content = content
+
+
+#Stores blocked relationships between users
+class Block(db.Model):
+    __tablename__ = 'blocks'
+
+    blockID = db.Column(db.Integer, primary_key=True)
+    blockerID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    blockedID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, blockerID, blockedID):
+        self.blockerID = blockerID
+        self.blockedID = blockedID
+
+
+#Stores reports made by users against other users
+class Report(db.Model):
+    __tablename__ = 'reports'
+
+    reportID = db.Column(db.Integer, primary_key=True)
+    reporterID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    reportedID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, reporterID, reportedID, reason):
+        self.reporterID = reporterID
+        self.reportedID = reportedID
+        self.reason = reason
         
         
