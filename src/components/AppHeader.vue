@@ -1,10 +1,26 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const darkMode = ref(false)
+
+function applyDarkMode() {
+  document.body.classList.toggle('dark-mode', darkMode.value)
+  localStorage.setItem('darkMode', darkMode.value ? 'true' : 'false')
+}
+
+function toggleDarkMode() {
+  darkMode.value = !darkMode.value
+  applyDarkMode()
+}
+
+onMounted(() => {
+  darkMode.value = localStorage.getItem('darkMode') === 'true'
+  applyDarkMode()
+})
 
 const isAuthenticated = computed(() => authStore.authenticated)
 const displayName = computed(() => authStore.user?.first_name || authStore.user?.username || 'Profile')
@@ -21,18 +37,17 @@ async function handleLogout() {
       <RouterLink class="brand" to="/">DriftDater</RouterLink>
 
       <div class="nav-links">
-        <RouterLink class="nav-link" to="/">Home</RouterLink>
-        <RouterLink class="nav-link" to="/about">About</RouterLink>
+        <RouterLink class="nav-link" to="/"> Home</RouterLink>
+        <RouterLink class="nav-link" to="/about"> About</RouterLink>
 
         <template v-if="isAuthenticated">
-          <RouterLink class="nav-link" to="/browse">Browse</RouterLink>
-          <RouterLink class="nav-link" to="/chat">Chat</RouterLink>
-          <RouterLink class="nav-link" to="/profile">{{ displayName }}</RouterLink>
-          <RouterLink class="nav-link" to="/notifications">Notifications</RouterLink>
-          <RouterLink class="nav-link" to="/blocked-users">Blocked</RouterLink>
-          <button class="nav-action nav-action-secondary" type="button" @click="handleLogout">
-            Logout
-          </button>
+          <RouterLink class="nav-link" to="/browse"> Browse</RouterLink>
+          <RouterLink class="nav-link" to="/chat"> Chat</RouterLink>
+          <RouterLink class="nav-link" to="/profile"> {{ displayName }}</RouterLink>
+          <RouterLink class="nav-link" to="/notifications"> Notifications</RouterLink>
+          <RouterLink class="nav-link" to="/blocked-users"> Blocked</RouterLink>
+          <button class="theme-toggle" type="button" @click="toggleDarkMode"> {{ darkMode ? 'Light Mode' : 'Dark Mode' }}</button>
+          <button class="nav-action nav-action-secondary" type="button" @click="handleLogout"> Logout </button>
         </template>
 
         <template v-else>
@@ -127,5 +142,23 @@ async function handleLogout() {
     width: 100%;
     justify-content: flex-start;
   }
+}
+
+.theme-toggle {
+  border: 0;
+  border-radius: 999px;
+  background: #ffe4e6;
+  color: #9f1239;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 14px;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(251, 113, 133, 0.18);
+  color: #e11d48;
+  transform: translateY(-1px);
 }
 </style>
