@@ -99,6 +99,46 @@ class User_Interest(db.Model):
         self.userID = userID
         self.interestID = interestID
 
+#Like model
+class Like(db.Model):
+    __tablename__ = 'likes'
+
+    likeID = db.Column(db.Integer, primary_key=True)
+    liker_id = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False, index=True)
+    liked_id = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False, index=True)
+    action = db.Column(db.String(10), nullable=False)  # 'like' or 'pass'
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.UniqueConstraint('liker_id', 'liked_id', name='unique_like_pair'),
+    )
+
+    def __init__(self, liker_id, liked_id, action):
+        self.liker_id = liker_id
+        self.liked_id = liked_id
+        self.action = action
+
+    def __repr__(self):
+        return f'<Like {self.liker_id} -> {self.liked_id} ({self.action})>'
+
+
+#Match model — status and mutual_match has defaults
+class Match(db.Model):
+    __tablename__ = 'matches'
+    
+    matchID = db.Column(db.Integer, primary_key=True)
+    user1_id = db.Column(db.Integer, db.ForeignKey('users.userID'))
+    user2_id = db.Column(db.Integer, db.ForeignKey('users.userID'))
+    status = db.Column(db.String(25), default='active')
+    mutual_match = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    def __init__(self, user1_id, user2_id, status='active', mutual_match=True):
+        self.user1_id = user1_id
+        self.user2_id = user2_id
+        self.status = status
+        self.mutual_match = mutual_match
+
     
 class Match(db.Model):
     __tablename__ = 'matches'
@@ -191,5 +231,7 @@ class Report(db.Model):
         self.reporterID = reporterID
         self.reportedID = reportedID
         self.reason = reason
+        
+        
         
         

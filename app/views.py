@@ -353,9 +353,208 @@ def upload_profile_picture():
     
     
 # 2. Matching System
+def calculate_match_score(current_user, candidate):
+    """
+    Scores a candidate against the current user across 4 criteria.
+    Returns (score, max_score) so percentage can be calculated.
+    """
+    score = 0
+    MAX_SCORE = 4
+
+    # Criteria 1: Gender preference
+    looking_for = current_user.looking_for
+    if looking_for == 'any' or looking_for == candidate.gender:
+        score += 1
+
+    # Criteria 2: Age range — within 5 years
+    current_age = calculate_age(current_user.date_of_birth)
+    candidate_age = calculate_age(candidate.date_of_birth)
+    if current_age and candidate_age and abs(current_age - candidate_age) <= 5:
+        score += 1
+
+    # Criteria 3: Shared interests
+    current_interest_ids = {
+        ui.interestID for ui in User_Interest.query.filter_by(userID=current_user.userID).all()
+    }
+    candidate_interest_ids = {
+        ui.interestID for ui in User_Interest.query.filter_by(userID=candidate.userID).all()
+    }
+    if current_interest_ids & candidate_interest_ids:
+        score += 1
+
+    # Criteria 4: Same city
+    if current_user.locationID and candidate.locationID:
+        current_location = db.session.get(Location, current_user.locationID)
+        candidate_location = db.session.get(Location, candidate.locationID)
+        if current_location and candidate_location:
+            if current_location.city == candidate_location.city:
+                score += 1
+
+    return score, MAX_SCORE
 
 
+@app.route('/api/matches/discover', methods=['GET'])
+@login_required
+def discover_matches():
+    """
+    Returns scored and sorted potential matches for the current user.
+    Excludes users already liked/passed on and private profiles.
+    """
+    # Get IDs of users already acted on
+    already_acted = db.session.query(Like.liked_id).filter(
+        Like.liker_id == current_user.userID
+    ).subquery()
 
+    # Fetch candidates — exclude self, already acted on, private profiles
+    candidates = User.query.filter(
+        User.userID != current_user.userID,
+        User.userID.notin_(already_acted),
+        User.profile_visibility == True
+    ).all()
+
+    result = []
+
+    for candidate in candidates:
+        score, max_score = calculate_match_score(current_user, candidate)
+        match_percentage = round((score / max_score) * 100, 1)
+
+        interests = Interest.query \
+            .join(User_Interest, Interest.interestID == User_Interest.interestID) \
+            .filter(User_Interest.userID == candidate.userID) \
+            .all()
+
+        result.append({
+            "userID": candidate.userID,
+            "username": candidate.username,
+            "first_name": candidate.first_name,
+            "last_name": candidate.last_name,
+            "age": calculate_age(candidate.date_of_birth),
+            "gender": candidate.gender,
+            "bio": candidate.bio,
+            "profile_picture": candidate.profile_picture,
+            "interests": [i.interest_name for i in interests],
+            "match_score": score,
+            "match_percentage": match_percentage
+        })
+
+    # Sort by highest match percentage first
+    result.sort(key=lambda x: x['match_percentage'], reverse=True)
+
+    return jsonify(result), 200
+
+
+@app.route('/api/matches/like/<int:liked_user_id>', methods=['POST'])
+@login_required
+def like_user(liked_user_id):
+    """
+    Like or pass on a user.
+    Automatically creates a Match record when both users like each other.
+    """
+    data = request.get_json()
+    action = data.get('action')  # 'like' or 'pass'
+
+    if action not in ('like', 'pass'):
+        return jsonify({"error": "action must be 'like' or 'pass'"}), 400
+
+    liked_user = db.session.get(User, liked_user_id)
+    if not liked_user:
+        return jsonify({"error": "User not found"}), 404
+
+    if liked_user_id == current_user.userID:
+        return jsonify({"error": "You cannot like yourself"}), 400
+
+    # Prevent duplicate actions
+    existing = Like.query.filter_by(
+        liker_id=current_user.userID,
+        liked_id=liked_user_id
+    ).first()
+    if existing:
+        return jsonify({"error": "You have already acted on this user"}), 409
+
+    # Record the like or pass
+    like = Like(
+        liker_id=current_user.userID,
+        liked_id=liked_user_id,
+        action=action
+    )
+    db.session.add(like)
+
+    # Check for mutual match only when action is 'like'
+    mutual_match = False
+    if action == 'like':
+        reverse = Like.query.filter_by(
+            liker_id=liked_user_id,
+            liked_id=current_user.userID,
+            action='like'
+        ).first()
+
+        if reverse:
+            match = Match(
+                user1_id=current_user.userID,
+                user2_id=liked_user_id
+            )
+            db.session.add(match)
+            mutual_match = True
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "It's a match!" if mutual_match else "Action recorded",
+        "mutual_match": mutual_match
+    }), 200
+
+
+@app.route('/api/matches', methods=['GET'])
+@login_required
+def get_my_matches():
+    """
+    Returns all confirmed mutual matches for the current user.
+    """
+    matches = Match.query.filter(
+        (Match.user1_id == current_user.userID) |
+        (Match.user2_id == current_user.userID)
+    ).all()
+
+    result = []
+
+    for match in matches:
+        other_id = match.user2_id if match.user1_id == current_user.userID else match.user1_id
+        other_user = db.session.get(User, other_id)
+
+        if not other_user:
+            continue
+
+        interests = Interest.query \
+            .join(User_Interest, Interest.interestID == User_Interest.interestID) \
+            .filter(User_Interest.userID == other_user.userID) \
+            .all()
+
+        result.append({
+            "matchID": match.matchID,
+            "userID": other_user.userID,
+            "username": other_user.username,
+            "first_name": other_user.first_name,
+            "last_name": other_user.last_name,
+            "age": calculate_age(other_user.date_of_birth),
+            "bio": other_user.bio,
+            "profile_picture": other_user.profile_picture,
+            "interests": [i.interest_name for i in interests],
+            "matched_on": match.created_at.isoformat() if match.created_at else None
+        })
+
+    return jsonify(result), 200
+
+
+@app.route('/api/matches/count', methods=['GET'])
+@login_required
+def get_match_count():
+    """Returns the total number of mutual matches for the current user."""
+    count = Match.query.filter(
+        (Match.user1_id == current_user.userID) |
+        (Match.user2_id == current_user.userID)
+    ).count()
+
+    return jsonify({"match_count": count}), 200
 
 
 
