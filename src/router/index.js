@@ -7,6 +7,8 @@ import BrowseMatchesView from '../views/BrowseMatchesView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import NotificationsView from '../views/NotificationsView.vue'
+import BlockedUsersView from '../views/BlockedUsersView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +51,18 @@ const router = createRouter({
       path: '/browse',
       name: 'BrowseMatches',
       component: BrowseMatchesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: NotificationsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/blocked-users',
+      name: 'blocked-users',
+      component: BlockedUsersView,
       meta: { requiresAuth: true }
     }
   ]

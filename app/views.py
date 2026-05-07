@@ -13,7 +13,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
-from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification
+from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification, Block, Report
 
 
 ###

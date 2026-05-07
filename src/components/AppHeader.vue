@@ -28,6 +28,8 @@ async function handleLogout() {
           <RouterLink class="nav-link" to="/browse">Browse</RouterLink>
           <RouterLink class="nav-link" to="/chat">Chat</RouterLink>
           <RouterLink class="nav-link" to="/profile">{{ displayName }}</RouterLink>
+          <RouterLink class="nav-link" to="/notifications">Notifications</RouterLink>
+          <RouterLink class="nav-link" to="/blocked-users">Blocked</RouterLink>
           <button class="nav-action nav-action-secondary" type="button" @click="handleLogout">
             Logout
           </button>
