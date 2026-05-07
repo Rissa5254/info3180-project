@@ -272,9 +272,19 @@ def update_profile():
 @app.route('/api/users/browse', methods=['GET'])
 @login_required
 def browse_users():
+    blocked_ids = db.session.query(Block.blockedID).filter(
+    Block.blockerID == current_user.userID
+    )
+
+    blocked_by_ids = db.session.query(Block.blockerID).filter(
+        Block.blockedID == current_user.userID
+    )
+
     users = User.query.filter(
         User.userID != current_user.userID,
-        User.profile_visibility == True
+        User.profile_visibility == True,
+        ~User.userID.in_(blocked_ids),
+        ~User.userID.in_(blocked_by_ids)
     ).order_by(User.created_at.desc()).all()
 
     today = date.today()
@@ -460,7 +470,7 @@ def search_users():
     # Query parameters
     search_word = request.args.get("q")
     min_age = request.args.get("min_age", type=int)
-    max_age = request.args.get("min_age", type=int)
+    max_age = request.args.get("max_age", type=int)
     cities = request.args.get('city')
     countries = request.args.get('country')
     selected_interests = request.args.get('interests')
@@ -498,9 +508,12 @@ def search_users():
         query = query.filter(User.date_of_birth >= min_dob)
         
     # Filtering by Interests
+    # Filtering by Interests
     if selected_interests:
-        interest_ids = [int(i) for i in interest_ids.split(',')]
-        query = query.join(User_Interest).filter(User_Interest.interestID.in_(interest_ids))
+        interest_ids = [int(i) for i in selected_interests.split(',')]
+        query = query.join(User_Interest).filter(
+            User_Interest.interestID.in_(interest_ids)
+    )
     
     # Additional Criteria (gender & profile visibility)
     if requested_gender:
@@ -569,7 +582,7 @@ def get_favourite(userID):
 @app.route('/api/notifications', methods=['GET'])
 @login_required
 
-#Return all notifications for logged in user (newest first)
+# Return all notifications for logged in user (newest first)
 def get_notifications():
     notifications = Notification.query.filter_by(userID=current_user.userID) \
         .order_by(Notification.created_at.desc()) \
@@ -592,7 +605,7 @@ def get_notifications():
 @app.route('/api/notifications/<int:notification_id>/read', methods=['PUT'])
 @login_required
 
-#Marks notifications as read
+# Marks notifications as read
 def mark_notification_read(notification_id):
     notification = Notification.query.filter_by(
         notificationID=notification_id,
@@ -613,16 +626,16 @@ def mark_notification_read(notification_id):
 @app.route('/api/users/<int:user_id>/block', methods=['POST'])
 @login_required
 
-#Blocks user and prevents them from appear in browse results
+# Blocks user and prevents them from appear in browse results
 def block_user(user_id):
 
-    #Prevents a user from blocking themself
+    # Prevents a user from blocking themself
     if user_id == current_user.userID:
         return jsonify({"error": "You cannot block yourself."}), 400
 
     user_to_block = User.query.get(user_id)
 
-    #Checking if a user exists
+    # Checking if a user exists
     if not user_to_block:
         return jsonify({"error": "User not found."}), 404
 
@@ -631,7 +644,7 @@ def block_user(user_id):
         blockedID=user_id
     ).first()
  
-    #Checking if a user is already blocked
+    # Checking if a user is already blocked
     if existing_block:
         return jsonify({"error": "User already blocked."}), 409
 
@@ -670,14 +683,14 @@ def get_blocked_users():
 @app.route('/api/users/<int:user_id>/unblock', methods=['DELETE'])
 @login_required
 
-#Unblocks user so they appear in your browse results again
+# Unblocks user so they appear in your browse results again
 def unblock_user(user_id):
     block = Block.query.filter_by(
         blockerID=current_user.userID,
         blockedID=user_id
     ).first()
 
-    #Checks if user wasn't blocked
+    # Checks if user wasn't blocked
     if not block:
         return jsonify({"error": "User not blocked."}), 404
 
@@ -694,13 +707,13 @@ def unblock_user(user_id):
 # Allows a user to report another with a reason
 def report_user(user_id):
 
-    #Prevents a user from reporting themself
+    # Prevents a user from reporting themself
     if user_id == current_user.userID:
         return jsonify({"error": "You cannot report yourself."}), 400
 
     user_to_report = User.query.get(user_id)
 
-    #Checks if user exists
+    # Checks if user exists
     if not user_to_report:
         return jsonify({"error": "User not found."}), 404
 
