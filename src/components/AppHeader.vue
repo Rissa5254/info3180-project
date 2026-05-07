@@ -42,10 +42,11 @@ async function handleLogout() {
 
         <template v-if="isAuthenticated">
           <RouterLink class="nav-link" to="/browse"> Browse</RouterLink>
+          <RouterLink class="nav-link" to="/favourite"> Favourite</RouterLink>
           <RouterLink class="nav-link" to="/chat"> Chat</RouterLink>
-          <RouterLink class="nav-link" to="/profile"> {{ displayName }}</RouterLink>
           <RouterLink class="nav-link" to="/notifications"> Notifications</RouterLink>
           <RouterLink class="nav-link" to="/blocked-users"> Blocked</RouterLink>
+          <RouterLink class="nav-link" to="/profile"> {{ displayName }}</RouterLink>
           <button class="theme-toggle" type="button" @click="toggleDarkMode"> {{ darkMode ? 'Light Mode' : 'Dark Mode' }}</button>
           <button class="nav-action nav-action-secondary" type="button" @click="handleLogout"> Logout </button>
         </template>

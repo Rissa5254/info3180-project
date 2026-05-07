@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import ChatView from '../views/ChatView.vue'
 import BrowseMatchesView from '../views/BrowseMatchesView.vue'
+import FavouritesView from '../views/FavouritesView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
@@ -51,6 +52,12 @@ const router = createRouter({
       path: '/browse',
       name: 'BrowseMatches',
       component: BrowseMatchesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/favourite',
+      name: 'Favourite',
+      component: FavouritesView,
       meta: { requiresAuth: true }
     },
     {
