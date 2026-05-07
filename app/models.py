@@ -138,23 +138,6 @@ class Match(db.Model):
         self.user2_id = user2_id
         self.status = status
         self.mutual_match = mutual_match
-
-    
-class Match(db.Model):
-    __tablename__ = 'matches'
-    
-    matchID = db.Column(db.Integer, primary_key=True)
-    user1_id = db.Column(db.Integer, db.ForeignKey('users.userID')) 
-    user2_id = db.Column(db.Integer, db.ForeignKey('users.userID'))
-    status = db.Column(db.String(25))
-    mutual_match = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-    
-    def __init__(self, user1_id, user2_id, status, mutual_match):
-        self.user1_id = user1_id
-        self.user2_id = user2_id
-        self.status = status
-        self.mutual_match = mutual_match
         
 
 class Message(db.Model):

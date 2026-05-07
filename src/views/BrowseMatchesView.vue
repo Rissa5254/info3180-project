@@ -6,6 +6,7 @@ const users = ref([])
 const error = ref('')
 const success = ref('')
 const loading = ref(true)
+
 const reportingUser = ref(null)
 const reportReason = ref('')
 const blockingUser = ref(null)
@@ -16,47 +17,31 @@ const filters = reactive({
   location:""
 })
 
-function applyFilters() {
-  appliedFilters.q = filters.q
-  appliedFilters.ageRange = filters.ageRange
-  appliedFilters.location = filters.location
-}
-
-const resetFilters = () => {
-  filters.q = ""
-  filters.ageRange = ""
-  filters.location = ""
-
-  appliedFilters.q = ''
-  appliedFilters.ageRange = ''
-  appliedFilters.location = ''
-}
-
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
 
     // Search by name or bio
     const searchMatch =
       !filters.q ||
-      user.first_name?.toLowerCase().includes(filters.value.q.toLowerCase()) ||
-      user.last_name?.toLowerCase().includes(filters.value.q.toLowerCase()) ||
-      user.bio?.toLowerCase().includes(filters.value.q.toLowerCase())
+      user.first_name?.toLowerCase().includes(filters.q.toLowerCase()) ||
+      user.last_name?.toLowerCase().includes(filters.q.toLowerCase()) ||
+      user.bio?.toLowerCase().includes(filters.q.toLowerCase())
 
     // Location filter
     const locationMatch =
-      !filters.value.location ||
-      user.location?.toLowerCase().includes(filters.value.location.toLowerCase())
+      !filters.location ||
+      user.location?.toLowerCase().includes(filters.location.toLowerCase())
 
     // Age filter
     let ageMatch = true
 
-    if (filters.value.ageRange === '18-25') {
+    if (filters.ageRange === '18-25') {
       ageMatch = user.age >= 18 && user.age <= 25
-    } else if (filters.value.ageRange === '26-35') {
+    } else if (filters.ageRange === '26-35') {
       ageMatch = user.age >= 26 && user.age <= 35
-    } else if (filters.value.ageRange === '36-50') {
+    } else if (filters.ageRange === '36-50') {
       ageMatch = user.age >= 36 && user.age <= 50
-    } else if (filters.value.ageRange === '51+') {
+    } else if (filters.ageRange === '51+') {
       ageMatch = user.age >= 51
     }
 
@@ -64,6 +49,11 @@ const filteredUsers = computed(() => {
   })
 })
 
+function resetFilters(){
+  filters.q = ""
+  filters.ageRange = ""
+  filters.location = ""
+}
 
 function openBlock(user) {
   blockingUser.value = user
@@ -166,8 +156,7 @@ onMounted(loadUsers)
     </div>
 
     <!---Buttons-->
-    <button @click="applyFilters">Apply Filters</button>
-    <button @click="resetFilters">Reset Filters</button>
+    <button class="reset-btn" @click="resetFilters">Reset Filters</button>
 
 
     <p v-if="loading">Loading profiles...</p>
@@ -271,14 +260,14 @@ onMounted(loadUsers)
     margin-top: 15px;
 }
 
-.filters input, select, button{
+.filters input, select, .reset-btn{
     width: 100%;
     border: none;
     border-radius: 5px;
     padding: 5px;
 }
 
-button{
+.reset-btn{
     margin-bottom: 10px;
     color: white;
     padding: 10px;
@@ -286,20 +275,12 @@ button{
     cursor: pointer;
 }
 
-button:first-of-type{
+.reset-btn:first-of-type{
     background-color: rgb(68, 68, 236);
 }
 
-button:first-of-type:hover {
-    background-color: rgb(48, 48, 210);
-}
-
-button:last-of-type{
+.reset-btn:first-of-type:hover {
     background-color: rgb(163, 159, 159);
-}
-
-button:last-of-type:hover {
-    background-color: rgb(145, 118, 118);
 }
 
 .profile-grid {
