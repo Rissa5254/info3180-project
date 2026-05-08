@@ -12,6 +12,10 @@ JSON Scripts
     "date_of_birth": "2004-09-09",
     "gender": "Female",
     "looking_for": "Male",
+    "location": {
+      "city": "Kingston",
+      "country": "Jamaica"
+    },
     "preferred_radius": "15",
     "bio": "Hello, I'm Lora.  A 21 year old, final year university student hoping to find someone interesting.",
     "interests": ["music", "nature", "long walks on the beach"]
@@ -27,6 +31,10 @@ JSON Scripts
     "date_of_birth": "2002-05-14",
     "gender": "Female",
     "looking_for": "Male",
+    "location": {
+      "city": "Kingston",
+      "country": "Jamaica"
+    },
     "preferred_radius": "10",
     "bio": "Maya is a friendly and creative person who enjoys good conversations, trying new food, and relaxing with movies.",
     "interests": ["music", "cooking", "movies"]
@@ -42,6 +50,10 @@ JSON Scripts
     "date_of_birth": "2001-09-22",
     "gender": "Male",
     "looking_for": "Female",
+    "location": {
+      "city": "Montego Bay",
+      "country": "Jamaica"
+    },
     "preferred_radius": "15",
     "bio": "Daniel is outgoing and enjoys staying active, playing sports, and exploring new places on weekends.",
     "interests": ["football", "fitness", "travel"]
@@ -57,6 +69,10 @@ JSON Scripts
     "date_of_birth": "2003-01-08",
     "gender": "Female",
     "looking_for": "Male",
+    "location": {
+      "city": "Mandeville",
+      "country": "Jamaica"
+    },
     "preferred_radius": "8",
     "bio": "Alia enjoys quiet moments, reading books, and connecting with thoughtful and kind people.",
     "interests": ["reading", "painting", "coffee"]
@@ -72,6 +88,10 @@ JSON Scripts
     "date_of_birth": "2000-11-30",
     "gender": "Male",
     "looking_for": "Female",
+    "location": {
+      "city": "Portmore",
+      "country": "Jamaica"
+    },
     "preferred_radius": "20",
     "bio": "Kevon is laid back and enjoys music, gaming, and having a good laugh with friends.",
     "interests": ["gaming", "music", "comedy"]
@@ -87,6 +107,10 @@ JSON Scripts
     "date_of_birth": "2002-07-19",
     "gender": "Female",
     "looking_for": "Male",
+    "location": {
+      "city": "Ocho Rios",
+      "country": "Jamaica"
+    },
     "preferred_radius": "12",
     "bio": "Brianna is ambitious and enjoys spending time outdoors and meeting people with good energy.",
     "interests": ["beach", "photography", "food"]
@@ -102,6 +126,10 @@ JSON Scripts
     "date_of_birth": "1999-03-11",
     "gender": "Male",
     "looking_for": "Female",
+    "location": {
+      "city": "Kingston",
+      "country": "Jamaica"
+    },
     "preferred_radius": "25",
     "bio": "Jason is calm and enjoys movies, technology, and deep conversations about life.",
     "interests": ["technology", "movies", "basketball"]
@@ -117,6 +145,10 @@ JSON Scripts
     "date_of_birth": "2001-12-04",
     "gender": "Female",
     "looking_for": "Male",
+    "location": {
+      "city": "Spanish Town",
+      "country": "Jamaica"
+    },
     "preferred_radius": "10",
     "bio": "Nia is cheerful and enjoys dancing, fashion, and trying new experiences.",
     "interests": ["dancing", "fashion", "restaurants"]
@@ -132,6 +164,10 @@ JSON Scripts
     "date_of_birth": "2000-06-27",
     "gender": "Male",
     "looking_for": "Female",
+    "location": {
+      "city": "May Pen",
+      "country": "Jamaica"
+    },
     "preferred_radius": "18",
     "bio": "Andre enjoys staying active, learning new things, and meeting genuine people.",
     "interests": ["gym", "reading", "music"]
@@ -147,6 +183,10 @@ JSON Scripts
     "date_of_birth": "2003-10-16",
     "gender": "Female",
     "looking_for": "Male",
+    "location": {
+      "city": "Port Antonio",
+      "country": "Jamaica"
+    },
     "preferred_radius": "15",
     "bio": "Shanice is creative and enjoys music, journaling, and peaceful evenings.",
     "interests": ["journaling", "music", "baking"]
@@ -162,6 +202,10 @@ JSON Scripts
     "date_of_birth": "1998-08-05",
     "gender": "Male",
     "looking_for": "Female",
+    "location": {
+      "city": "Montego Bay",
+      "country": "Jamaica"
+    },
     "preferred_radius": "30",
     "bio": "Malik is adventurous and enjoys traveling, sports, and meeting new people.",
     "interests": ["travel", "cricket", "movies"]
@@ -177,6 +221,10 @@ JSON Scripts
     "date_of_birth": "2001-04-12",
     "gender": "Female",
     "looking_for": "Female",
+    "location": {
+      "city": "Kingston",
+      "country": "Jamaica"
+    },
     "preferred_radius": "12",
     "bio": "Leah is calm, thoughtful, and enjoys deep conversations, music, and quiet evenings.",
     "interests": ["music", "reading", "art"]
@@ -192,6 +240,10 @@ JSON Scripts
     "date_of_birth": "2002-08-25",
     "gender": "Female",
     "looking_for": "Female",
+    "location": {
+      "city": "Portmore",
+      "country": "Jamaica"
+    },
     "preferred_radius": "10",
     "bio": "Tasha is energetic and fun, always up for trying new food spots and exploring new places.",
     "interests": ["food", "travel", "fitness"]
@@ -207,6 +259,10 @@ JSON Scripts
     "date_of_birth": "2003-02-03",
     "gender": "Female",
     "looking_for": "Female",
+    "location": {
+      "city": "Mandeville",
+      "country": "Jamaica"
+    },
     "preferred_radius": "8",
     "bio": "Kiara enjoys creative hobbies and meeting people who are genuine and expressive.",
     "interests": ["painting", "fashion", "photography"]
@@ -222,6 +278,10 @@ JSON Scripts
     "date_of_birth": "2000-06-18",
     "gender": "Male",
     "looking_for": "Male",
+    "location": {
+      "city": "Spanish Town",
+      "country": "Jamaica"
+    },
     "preferred_radius": "15",
     "bio": "Devon is laid back and enjoys gaming, music, and spending time with friends.",
     "interests": ["gaming", "music", "movies"]
@@ -237,6 +297,10 @@ JSON Scripts
     "date_of_birth": "1999-11-07",
     "gender": "Male",
     "looking_for": "Male",
+    "location": {
+      "city": "Montego Bay",
+      "country": "Jamaica"
+    },
     "preferred_radius": "20",
     "bio": "Marcus is confident and enjoys staying active, traveling, and meeting new people.",
     "interests": ["gym", "travel", "sports"]
@@ -252,6 +316,10 @@ JSON Scripts
     "date_of_birth": "2001-09-14",
     "gender": "Male",
     "looking_for": "Male",
+    "location": {
+      "city": "Kingston",
+      "country": "Jamaica"
+    },
     "preferred_radius": "18",
     "bio": "Andre is easygoing and enjoys good conversation, music, and relaxed weekends.",
     "interests": ["music", "reading", "chilling"]
@@ -267,6 +335,10 @@ JSON Scripts
     "date_of_birth": "2002-03-09",
     "gender": "Female",
     "looking_for": "Female",
+    "location": {
+      "city": "Ocho Rios",
+      "country": "Jamaica"
+    },
     "preferred_radius": "14",
     "bio": "Rachel is warm and easygoing, enjoys meaningful conversations and spending time outdoors with good company.",
     "interests": ["hiking", "music", "movies"]
@@ -282,6 +354,10 @@ JSON Scripts
     "date_of_birth": "2000-10-21",
     "gender": "Male",
     "looking_for": "Male",
+    "location": {
+      "city": "Portmore",
+      "country": "Jamaica"
+    },
     "preferred_radius": "16",
     "bio": "Keith is outgoing and enjoys social events, sports, and meeting people who are confident and fun.",
     "interests": ["football", "gym", "parties"]

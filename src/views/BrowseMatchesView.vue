@@ -25,16 +25,22 @@ const filters = reactive({
 
 const filteredProfiles = computed(() => {
   return matchesStore.discoveredProfiles.filter(user => {
+    
+    // Search by name or bio
     const searchMatch =
       !filters.q ||
       user.first_name?.toLowerCase().includes(filters.q.toLowerCase()) ||
       user.last_name?.toLowerCase().includes(filters.q.toLowerCase()) ||
       user.bio?.toLowerCase().includes(filters.q.toLowerCase())
 
+    // Location filter
+    const userLocation = `${user.location?.city || ''} ${user.location?.country || ''}`.toLowerCase()
+
     const locationMatch =
       !filters.location ||
-      user.location?.toLowerCase().includes(filters.location.toLowerCase())
+      userLocation.includes(filters.location.toLowerCase())
 
+    // Age filter
     let ageMatch = true
     if (filters.ageRange === '18-25') ageMatch = user.age >= 18 && user.age <= 25
     else if (filters.ageRange === '26-35') ageMatch = user.age >= 26 && user.age <= 35

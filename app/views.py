@@ -13,7 +13,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
-from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification, Block, Report
+from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification, Block, Report, Like
 
 
 ###
@@ -23,6 +23,16 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def calculate_age(dob):
+    if not dob:
+        return None
+
+    today = date.today()
+
+    return today.year - dob.year - (
+        (today.month, today.day) < (dob.month, dob.day)
+    )
 
 @app.route('/')
 def index():
@@ -195,6 +205,12 @@ def get_profile():
         "looking_for": user.looking_for,
         "bio": user.bio,
         "profile_visibility": user.profile_visibility,
+        "location": {
+            "city": user.location.city,
+            "country": user.location.country,
+            "latitude": user.location.latitude,
+            "longitude": user.location.longitude
+        } if user.location else None,
         "preferred_radius": user.preferred_radius,
         "profile_picture": user.profile_picture,
         "interests": [
@@ -214,6 +230,27 @@ def update_profile():
     current_user.gender = data.get('gender', current_user.gender)
     current_user.looking_for = data.get('looking_for', current_user.looking_for)
     current_user.preferred_radius = data.get('preferred_radius', current_user.preferred_radius)
+
+    location_data = data.get('location')
+
+    if location_data:
+        city = location_data.get('city', '').strip()
+        country = location_data.get('country', '').strip()
+
+        if city and country:
+            location = Location.query.filter_by(city=city, country=country).first()
+
+            if location is None:
+                location = Location(
+                    city=city,
+                    country=country,
+                    latitude=location_data.get('latitude'),
+                    longitude=location_data.get('longitude')
+                )
+                db.session.add(location)
+                db.session.flush()
+
+            current_user.locationID = location.locationID
 
     if 'profile_visibility' in data:
         current_user.profile_visibility = bool(data.get('profile_visibility'))
@@ -314,6 +351,10 @@ def browse_users():
             "gender": user.gender,
             "looking_for": user.looking_for,
             "bio": user.bio,
+            "location": {
+                "city": user.location.city,
+                "country": user.location.country
+            } if user.location else None,
             "profile_picture": user.profile_picture,
             "interests": [interest.interest_name for interest in interests]
         })
@@ -431,6 +472,10 @@ def discover_matches():
             "age": calculate_age(candidate.date_of_birth),
             "gender": candidate.gender,
             "bio": candidate.bio,
+            "location": {
+                "city": candidate.location.city,
+                "country": candidate.location.country
+            } if candidate.location else None,
             "profile_picture": candidate.profile_picture,
             "interests": [i.interest_name for i in interests],
             "match_score": score,
@@ -491,10 +536,24 @@ def like_user(liked_user_id):
         if reverse:
             match = Match(
                 user1_id=current_user.userID,
-                user2_id=liked_user_id
+                user2_id=liked_user_id,
+                status='matched',
+                mutual_match=True
             )
             db.session.add(match)
             mutual_match = True
+
+            db.session.add(Notification(
+                userID=current_user.userID,
+                type="match",
+                content=f"You matched with {liked_user.first_name} {liked_user.last_name}!"
+            ))
+
+            db.session.add(Notification(
+                userID=liked_user_id,
+                type="match",
+                content=f"You matched with {current_user.first_name} {current_user.last_name}!"
+            ))
 
     db.session.commit()
 
@@ -687,12 +746,14 @@ def search_users():
     
     # Filtering location by city or country
     if cities or countries:
-        query = query.join(Location)
-    
+        query = query.join(Location, User.locationID == Location.locationID)
+
         if cities:
             query = query.filter(Location.city.ilike(f"%{cities}%"))
+
         if countries:
             query = query.filter(Location.country.ilike(f"%{countries}%"))
+
     
     # Age Range 
     today = date.today()
