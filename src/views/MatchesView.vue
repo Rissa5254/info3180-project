@@ -25,22 +25,16 @@ const filters = reactive({
 
 const filteredProfiles = computed(() => {
   return matchesStore.discoveredProfiles.filter(user => {
-    
-    // Search by name or bio
     const searchMatch =
       !filters.q ||
       user.first_name?.toLowerCase().includes(filters.q.toLowerCase()) ||
       user.last_name?.toLowerCase().includes(filters.q.toLowerCase()) ||
       user.bio?.toLowerCase().includes(filters.q.toLowerCase())
 
-    // Location filter
-    const userLocation = `${user.location?.city || ''} ${user.location?.country || ''}`.toLowerCase()
-
     const locationMatch =
       !filters.location ||
-      userLocation.includes(filters.location.toLowerCase())
+      user.location?.toLowerCase().includes(filters.location.toLowerCase())
 
-    // Age filter
     let ageMatch = true
     if (filters.ageRange === '18-25') ageMatch = user.age >= 18 && user.age <= 25
     else if (filters.ageRange === '26-35') ageMatch = user.age >= 26 && user.age <= 35
@@ -125,21 +119,6 @@ async function submitReport() {
   }
 }
 
-async function saveFavourite(userID) {
-  error.value = ''
-  success.value = ''
-
-  try {
-    const response = await api.post('/favourites', {
-      saved_user_id: userID
-    })
-
-    success.value = response.data.message
-  } catch (err) {
-    error.value = err.response?.data?.error || 'Could not save favourite'
-  }
-}
-
 onMounted(() => {
   matchesStore.fetchDiscoveredProfiles()
 })
@@ -186,7 +165,6 @@ onMounted(() => {
         @action="handleAction"
         @block="openBlock"
         @report="openReport"
-        @favourite="saveFavourite"
       />
     </section>
 

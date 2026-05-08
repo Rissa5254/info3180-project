@@ -9,6 +9,10 @@ const form = ref({
   gender: '',
   looking_for: '',
   bio: '',
+  location: {
+    city: '',
+    country: ''
+  },
   preferred_radius: '',
   profile_visibility: true
 })
@@ -30,6 +34,8 @@ onMounted(async () => {
     form.value.gender = response.data.gender || ''
     form.value.looking_for = response.data.looking_for || ''
     form.value.bio = response.data.bio || ''
+    form.value.location.city = response.data.location?.city || ''
+    form.value.location.country = response.data.location?.country || ''
     form.value.preferred_radius = response.data.preferred_radius || ''
     form.value.profile_visibility = response.data.profile_visibility ?? true
   } catch (err) {
@@ -138,13 +144,35 @@ const response = await api.put('/profile', {
       </div>
 
       <div class="form-group">
-  <label>Interests/Hobbies</label>
-  <input
-    v-model="interestsText"
-    placeholder="Example: football, music, cooking"
-  />
-  <small>Enter at least 3 interests separated by commas.</small>
-</div>
+        <label>Interests/Hobbies</label>
+        <input
+          v-model="interestsText"
+          placeholder="Example: football, music, cooking"
+        />
+        <small>Enter at least 3 interests separated by commas.</small>
+      </div>
+
+      <div class="form-group">
+        <label class="section-title">Location</label>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>City</label>
+            <input
+              v-model="form.location.city"
+              placeholder="Kingston"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Country</label>
+            <input
+              v-model="form.location.country"
+              placeholder="Jamaica"
+            />
+          </div>
+        </div>
+      </div>
 
       <div class="form-group">
         <label>Preferred Radius</label>
@@ -162,23 +190,24 @@ const response = await api.put('/profile', {
 
       <p v-if="error" class="error">{{ error }}</p>
       <p v-if="message" class="success">{{ message }}</p>
-<div class="form-group">
-  <label>Profile Picture</label>
+      
+      <div class="form-group">
+        <label>Profile Picture</label>
 
-  <div v-if="profilePicture" class="preview-box">
-    <img
-      :src="`http://localhost:5000/static/uploads/${profilePicture}`"
-      alt="Profile picture"
-      class="profile-preview"
-    />
-  </div>
+        <div v-if="profilePicture" class="preview-box">
+          <img
+            :src="`http://localhost:5000/static/uploads/${profilePicture}`"
+            alt="Profile picture"
+            class="profile-preview"
+          />
+        </div>
 
-  <input type="file" accept="image/*" @change="handleFileChange" />
+        <input type="file" accept="image/*" @change="handleFileChange" />
 
-  <button type="button" class="secondary-button" @click="uploadProfilePicture">
-    Upload Picture
-  </button>
-</div>
+        <button type="button" class="secondary-button" @click="uploadProfilePicture">
+          Upload Picture
+        </button>
+      </div>
       <button type="submit">Save Changes</button>
     </form>
   </main>
@@ -281,5 +310,12 @@ button {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+.section-title {
+  margin-bottom: 10px;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 600;
 }
 </style>

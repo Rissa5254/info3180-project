@@ -62,8 +62,6 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return '<User %r>' % (self.username)
     
-    
-    
 
 class Location(db.Model):
     __tablename__ = 'location'
@@ -101,18 +99,41 @@ class User_Interest(db.Model):
         self.userID = userID
         self.interestID = interestID
 
-    
+#Like model
+class Like(db.Model):
+    __tablename__ = 'likes'
+
+    likeID = db.Column(db.Integer, primary_key=True)
+    liker_id = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False, index=True)
+    liked_id = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False, index=True)
+    action = db.Column(db.String(10), nullable=False)  # 'like' or 'pass'
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    __table_args__ = (
+        db.UniqueConstraint('liker_id', 'liked_id', name='unique_like_pair'),
+    )
+
+    def __init__(self, liker_id, liked_id, action):
+        self.liker_id = liker_id
+        self.liked_id = liked_id
+        self.action = action
+
+    def __repr__(self):
+        return f'<Like {self.liker_id} -> {self.liked_id} ({self.action})>'
+
+
+#Match model — status and mutual_match has defaults
 class Match(db.Model):
     __tablename__ = 'matches'
     
     matchID = db.Column(db.Integer, primary_key=True)
-    user1_id = db.Column(db.Integer, db.ForeignKey('users.userID')) 
+    user1_id = db.Column(db.Integer, db.ForeignKey('users.userID'))
     user2_id = db.Column(db.Integer, db.ForeignKey('users.userID'))
-    status = db.Column(db.String(25))
+    status = db.Column(db.String(25), default='active')
     mutual_match = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-    
-    def __init__(self, user1_id, user2_id, status, mutual_match):
+
+    def __init__(self, user1_id, user2_id, status='active', mutual_match=True):
         self.user1_id = user1_id
         self.user2_id = user2_id
         self.status = status
@@ -147,7 +168,8 @@ class Favourite(db.Model):
         self.userID = userID
         self.saved_user_id = saved_user_id
         
-        
+
+#Stores notifications sent to users (matches, alerts, etc...)        
 class Notification(db.Model):
     __tablename__ = 'notifications'
     
@@ -162,5 +184,37 @@ class Notification(db.Model):
         self.userID = userID
         self.type = type
         self.content = content
+
+
+#Stores blocked relationships between users
+class Block(db.Model):
+    __tablename__ = 'blocks'
+
+    blockID = db.Column(db.Integer, primary_key=True)
+    blockerID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    blockedID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, blockerID, blockedID):
+        self.blockerID = blockerID
+        self.blockedID = blockedID
+
+
+#Stores reports made by users against other users
+class Report(db.Model):
+    __tablename__ = 'reports'
+
+    reportID = db.Column(db.Integer, primary_key=True)
+    reporterID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    reportedID = db.Column(db.Integer, db.ForeignKey('users.userID'), nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __init__(self, reporterID, reportedID, reason):
+        self.reporterID = reporterID
+        self.reportedID = reportedID
+        self.reason = reason
+        
+        
         
         

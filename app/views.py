@@ -13,7 +13,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
-from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification
+from app.models import User, Location, Interest, User_Interest, Match, Message, Favourite, Notification, Block, Report, Like
 
 
 ###
@@ -23,6 +23,16 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def calculate_age(dob):
+    if not dob:
+        return None
+
+    today = date.today()
+
+    return today.year - dob.year - (
+        (today.month, today.day) < (dob.month, dob.day)
+    )
 
 @app.route('/')
 def index():
@@ -195,6 +205,12 @@ def get_profile():
         "looking_for": user.looking_for,
         "bio": user.bio,
         "profile_visibility": user.profile_visibility,
+        "location": {
+            "city": user.location.city,
+            "country": user.location.country,
+            "latitude": user.location.latitude,
+            "longitude": user.location.longitude
+        } if user.location else None,
         "preferred_radius": user.preferred_radius,
         "profile_picture": user.profile_picture,
         "interests": [
@@ -214,6 +230,27 @@ def update_profile():
     current_user.gender = data.get('gender', current_user.gender)
     current_user.looking_for = data.get('looking_for', current_user.looking_for)
     current_user.preferred_radius = data.get('preferred_radius', current_user.preferred_radius)
+
+    location_data = data.get('location')
+
+    if location_data:
+        city = location_data.get('city', '').strip()
+        country = location_data.get('country', '').strip()
+
+        if city and country:
+            location = Location.query.filter_by(city=city, country=country).first()
+
+            if location is None:
+                location = Location(
+                    city=city,
+                    country=country,
+                    latitude=location_data.get('latitude'),
+                    longitude=location_data.get('longitude')
+                )
+                db.session.add(location)
+                db.session.flush()
+
+            current_user.locationID = location.locationID
 
     if 'profile_visibility' in data:
         current_user.profile_visibility = bool(data.get('profile_visibility'))
@@ -272,9 +309,19 @@ def update_profile():
 @app.route('/api/users/browse', methods=['GET'])
 @login_required
 def browse_users():
+    blocked_ids = db.session.query(Block.blockedID).filter(
+    Block.blockerID == current_user.userID
+    )
+
+    blocked_by_ids = db.session.query(Block.blockerID).filter(
+        Block.blockedID == current_user.userID
+    )
+
     users = User.query.filter(
         User.userID != current_user.userID,
-        User.profile_visibility == True
+        User.profile_visibility == True,
+        ~User.userID.in_(blocked_ids),
+        ~User.userID.in_(blocked_by_ids)
     ).order_by(User.created_at.desc()).all()
 
     today = date.today()
@@ -304,6 +351,10 @@ def browse_users():
             "gender": user.gender,
             "looking_for": user.looking_for,
             "bio": user.bio,
+            "location": {
+                "city": user.location.city,
+                "country": user.location.country
+            } if user.location else None,
             "profile_picture": user.profile_picture,
             "interests": [interest.interest_name for interest in interests]
         })
@@ -343,10 +394,226 @@ def upload_profile_picture():
     
     
 # 2. Matching System
+def calculate_match_score(current_user, candidate):
+    """
+    Scores a candidate against the current user across 4 criteria.
+    Returns (score, max_score) so percentage can be calculated.
+    """
+    score = 0
+    MAX_SCORE = 4
+
+    # Criteria 1: Gender preference
+    looking_for = current_user.looking_for
+    if looking_for == 'any' or looking_for == candidate.gender:
+        score += 1
+
+    # Criteria 2: Age range — within 5 years
+    current_age = calculate_age(current_user.date_of_birth)
+    candidate_age = calculate_age(candidate.date_of_birth)
+    if current_age and candidate_age and abs(current_age - candidate_age) <= 5:
+        score += 1
+
+    # Criteria 3: Shared interests
+    current_interest_ids = {
+        ui.interestID for ui in User_Interest.query.filter_by(userID=current_user.userID).all()
+    }
+    candidate_interest_ids = {
+        ui.interestID for ui in User_Interest.query.filter_by(userID=candidate.userID).all()
+    }
+    if current_interest_ids & candidate_interest_ids:
+        score += 1
+
+    # Criteria 4: Same city
+    if current_user.locationID and candidate.locationID:
+        current_location = db.session.get(Location, current_user.locationID)
+        candidate_location = db.session.get(Location, candidate.locationID)
+        if current_location and candidate_location:
+            if current_location.city == candidate_location.city:
+                score += 1
+
+    return score, MAX_SCORE
 
 
+@app.route('/api/matches/discover', methods=['GET'])
+@login_required
+def discover_matches():
+    """
+    Returns scored and sorted potential matches for the current user.
+    Excludes users already liked/passed on and private profiles.
+    """
+    # Get IDs of users already acted on
+    already_acted = db.session.query(Like.liked_id).filter(
+        Like.liker_id == current_user.userID
+    ).subquery()
+
+    # Fetch candidates — exclude self, already acted on, private profiles
+    candidates = User.query.filter(
+        User.userID != current_user.userID,
+        User.userID.notin_(already_acted),
+        User.profile_visibility == True
+    ).all()
+
+    result = []
+
+    for candidate in candidates:
+        score, max_score = calculate_match_score(current_user, candidate)
+        match_percentage = round((score / max_score) * 100, 1)
+
+        interests = Interest.query \
+            .join(User_Interest, Interest.interestID == User_Interest.interestID) \
+            .filter(User_Interest.userID == candidate.userID) \
+            .all()
+
+        result.append({
+            "userID": candidate.userID,
+            "username": candidate.username,
+            "first_name": candidate.first_name,
+            "last_name": candidate.last_name,
+            "age": calculate_age(candidate.date_of_birth),
+            "gender": candidate.gender,
+            "bio": candidate.bio,
+            "location": {
+                "city": candidate.location.city,
+                "country": candidate.location.country
+            } if candidate.location else None,
+            "profile_picture": candidate.profile_picture,
+            "interests": [i.interest_name for i in interests],
+            "match_score": score,
+            "match_percentage": match_percentage
+        })
+
+    # Sort by highest match percentage first
+    result.sort(key=lambda x: x['match_percentage'], reverse=True)
+
+    return jsonify(result), 200
 
 
+@app.route('/api/matches/like/<int:liked_user_id>', methods=['POST'])
+@login_required
+def like_user(liked_user_id):
+    """
+    Like or pass on a user.
+    Automatically creates a Match record when both users like each other.
+    """
+    data = request.get_json()
+    action = data.get('action')  # 'like' or 'pass'
+
+    if action not in ('like', 'pass'):
+        return jsonify({"error": "action must be 'like' or 'pass'"}), 400
+
+    liked_user = db.session.get(User, liked_user_id)
+    if not liked_user:
+        return jsonify({"error": "User not found"}), 404
+
+    if liked_user_id == current_user.userID:
+        return jsonify({"error": "You cannot like yourself"}), 400
+
+    # Prevent duplicate actions
+    existing = Like.query.filter_by(
+        liker_id=current_user.userID,
+        liked_id=liked_user_id
+    ).first()
+    if existing:
+        return jsonify({"error": "You have already acted on this user"}), 409
+
+    # Record the like or pass
+    like = Like(
+        liker_id=current_user.userID,
+        liked_id=liked_user_id,
+        action=action
+    )
+    db.session.add(like)
+
+    # Check for mutual match only when action is 'like'
+    mutual_match = False
+    if action == 'like':
+        reverse = Like.query.filter_by(
+            liker_id=liked_user_id,
+            liked_id=current_user.userID,
+            action='like'
+        ).first()
+
+        if reverse:
+            match = Match(
+                user1_id=current_user.userID,
+                user2_id=liked_user_id,
+                status='matched',
+                mutual_match=True
+            )
+            db.session.add(match)
+            mutual_match = True
+
+            db.session.add(Notification(
+                userID=current_user.userID,
+                type="match",
+                content=f"You matched with {liked_user.first_name} {liked_user.last_name}!"
+            ))
+
+            db.session.add(Notification(
+                userID=liked_user_id,
+                type="match",
+                content=f"You matched with {current_user.first_name} {current_user.last_name}!"
+            ))
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "It's a match!" if mutual_match else "Action recorded",
+        "mutual_match": mutual_match
+    }), 200
+
+
+@app.route('/api/matches', methods=['GET'])
+@login_required
+def get_my_matches():
+    """
+    Returns all confirmed mutual matches for the current user.
+    """
+    matches = Match.query.filter(
+        (Match.user1_id == current_user.userID) |
+        (Match.user2_id == current_user.userID)
+    ).all()
+
+    result = []
+
+    for match in matches:
+        other_id = match.user2_id if match.user1_id == current_user.userID else match.user1_id
+        other_user = db.session.get(User, other_id)
+
+        if not other_user:
+            continue
+
+        interests = Interest.query \
+            .join(User_Interest, Interest.interestID == User_Interest.interestID) \
+            .filter(User_Interest.userID == other_user.userID) \
+            .all()
+
+        result.append({
+            "matchID": match.matchID,
+            "userID": other_user.userID,
+            "username": other_user.username,
+            "first_name": other_user.first_name,
+            "last_name": other_user.last_name,
+            "age": calculate_age(other_user.date_of_birth),
+            "bio": other_user.bio,
+            "profile_picture": other_user.profile_picture,
+            "interests": [i.interest_name for i in interests],
+            "matched_on": match.created_at.isoformat() if match.created_at else None
+        })
+
+    return jsonify(result), 200
+
+
+@app.route('/api/matches/count', methods=['GET'])
+@login_required
+def get_match_count():
+    """Returns the total number of mutual matches for the current user."""
+    count = Match.query.filter(
+        (Match.user1_id == current_user.userID) |
+        (Match.user2_id == current_user.userID)
+    ).count()
+
+    return jsonify({"match_count": count}), 200
 
 
 # 3. User Connections and Messaging
@@ -460,7 +727,7 @@ def search_users():
     # Query parameters
     search_word = request.args.get("q")
     min_age = request.args.get("min_age", type=int)
-    max_age = request.args.get("min_age", type=int)
+    max_age = request.args.get("max_age", type=int)
     cities = request.args.get('city')
     countries = request.args.get('country')
     selected_interests = request.args.get('interests')
@@ -479,12 +746,14 @@ def search_users():
     
     # Filtering location by city or country
     if cities or countries:
-        query = query.join(Location)
-    
+        query = query.join(Location, User.locationID == Location.locationID)
+
         if cities:
             query = query.filter(Location.city.ilike(f"%{cities}%"))
+
         if countries:
             query = query.filter(Location.country.ilike(f"%{countries}%"))
+
     
     # Age Range 
     today = date.today()
@@ -498,9 +767,12 @@ def search_users():
         query = query.filter(User.date_of_birth >= min_dob)
         
     # Filtering by Interests
+    # Filtering by Interests
     if selected_interests:
-        interest_ids = [int(i) for i in interest_ids.split(',')]
-        query = query.join(User_Interest).filter(User_Interest.interestID.in_(interest_ids))
+        interest_ids = [int(i) for i in selected_interests.split(',')]
+        query = query.join(User_Interest).filter(
+            User_Interest.interestID.in_(interest_ids)
+    )
     
     # Additional Criteria (gender & profile visibility)
     if requested_gender:
@@ -539,31 +811,253 @@ def search_users():
     
 
 @app.route('/api/favourites', methods=['POST'])
+@login_required
 def favourite_profile():
-    data = request.json
-    
+    data = request.get_json()
+
+    saved_user_id = data.get("saved_user_id")
+
+    if not saved_user_id:
+        return jsonify({"error": "saved_user_id is required."}), 400
+
+    if saved_user_id == current_user.userID:
+        return jsonify({"error": "You cannot favourite yourself."}), 400
+
+    saved_user = User.query.get(saved_user_id)
+
+    if not saved_user:
+        return jsonify({"error": "User not found."}), 404
+
+    existing_favourite = Favourite.query.filter_by(
+        userID=current_user.userID,
+        saved_user_id=saved_user_id
+    ).first()
+
+    if existing_favourite:
+        return jsonify({"error": "Profile already favourited."}), 409
+
     favourite = Favourite(
-        user_id=data["userID"],
-        saved_user_id=data["saved_user_id"]
+        userID=current_user.userID,
+        saved_user_id=saved_user_id
     )
+
     db.session.add(favourite)
     db.session.commit()
-    
-    return jsonify({"message": "Favourite profiles saved."}), 201
 
-@app.route('/api/favourites/<int:userID>', methods=['GET'])
-def get_favourite(userID):
-    favourites = Favourite.query.filter_by(userID=userID).all()
+    return jsonify({"message": "Favourite profile saved."}), 201
+
+
+@app.route('/api/favourites', methods=['GET'])
+@login_required
+def get_favourites():
+    favourites = Favourite.query.filter_by(userID=current_user.userID).all()
+
+    results = []
+
+    for favourite in favourites:
+        user = User.query.get(favourite.saved_user_id)
+
+        if user:
+            results.append({
+                "userID": user.userID,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "bio": user.bio,
+                "profile_picture": user.profile_picture
+            })
+
+    return jsonify(results), 200
+
+
+@app.route('/api/favourites/<int:saved_user_id>', methods=['DELETE'])
+@login_required
+def remove_favourite(saved_user_id):
+    favourite = Favourite.query.filter_by(
+        userID=current_user.userID,
+        saved_user_id=saved_user_id
+    ).first()
+
+    if not favourite:
+        return jsonify({"error": "Favourite not found."}), 404
+
+    db.session.delete(favourite)
+    db.session.commit()
+
+    return jsonify({"message": "Favourite removed successfully."}), 200  
     
-    results = [
-        {
-        "saved_user_id": f.saved_user_id
-        }
-        for f in favourites 
-    ]
-    
-    return jsonify(results)  
-    
+
+# 5. Notification
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+
+# Return all notifications for logged in user (newest first)
+def get_notifications():
+    notifications = Notification.query.filter_by(userID=current_user.userID) \
+        .order_by(Notification.created_at.desc()) \
+        .all()
+
+    results = []
+
+    for notification in notifications:
+        results.append({
+            "notificationID": notification.notificationID,
+            "type": notification.type,
+            "content": notification.content,
+            "is_read": notification.is_read,
+            "created_at": notification.created_at.isoformat() if notification.created_at else None
+        })
+
+    return jsonify(results), 200
+
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['PUT'])
+@login_required
+
+# Marks notifications as read
+def mark_notification_read(notification_id):
+    notification = Notification.query.filter_by(
+        notificationID=notification_id,
+        userID=current_user.userID
+    ).first()
+
+    # Checking if Notification exists
+    if not notification:
+        return jsonify({"error": "Notification not found."}), 404
+
+    notification.is_read = True
+    db.session.commit()
+
+    return jsonify({"message": "Notification marked as read."}), 200
+   
+
+# 6. Block User
+@app.route('/api/users/<int:user_id>/block', methods=['POST'])
+@login_required
+
+# Blocks user and prevents them from appear in browse results
+def block_user(user_id):
+
+    # Prevents a user from blocking themself
+    if user_id == current_user.userID:
+        return jsonify({"error": "You cannot block yourself."}), 400
+
+    user_to_block = User.query.get(user_id)
+
+    # Checking if a user exists
+    if not user_to_block:
+        return jsonify({"error": "User not found."}), 404
+
+    existing_block = Block.query.filter_by(
+        blockerID=current_user.userID,
+        blockedID=user_id
+    ).first()
+ 
+    # Checking if a user is already blocked
+    if existing_block:
+        return jsonify({"error": "User already blocked."}), 409
+
+    block = Block(
+        blockerID=current_user.userID,
+        blockedID=user_id
+    )
+
+    db.session.add(block)
+    db.session.commit()
+
+    return jsonify({"message": "User blocked successfully."}), 201
+
+
+# View Blocked List
+@app.route('/api/users/blocked', methods=['GET'])
+@login_required
+def get_blocked_users():
+    blocks = Block.query.filter_by(blockerID=current_user.userID).all()
+
+    results = []
+
+    for block in blocks:
+        user = User.query.get(block.blockedID)
+        if user:
+            results.append({
+                "userID": user.userID,
+                "username": user.username,
+                "email": user.email
+            })
+
+    return jsonify(results), 200
+
+
+# Unblock User
+@app.route('/api/users/<int:user_id>/unblock', methods=['DELETE'])
+@login_required
+
+# Unblocks user so they appear in your browse results again
+def unblock_user(user_id):
+    block = Block.query.filter_by(
+        blockerID=current_user.userID,
+        blockedID=user_id
+    ).first()
+
+    # Checks if user wasn't blocked
+    if not block:
+        return jsonify({"error": "User not blocked."}), 404
+
+    db.session.delete(block)
+    db.session.commit()
+
+    return jsonify({"message": "User unblocked successfully."}), 200
+
+
+# 7. Report User
+@app.route('/api/users/<int:user_id>/report', methods=['POST'])
+@login_required
+
+# Allows a user to report another with a reason
+def report_user(user_id):
+
+    # Prevents a user from reporting themself
+    if user_id == current_user.userID:
+        return jsonify({"error": "You cannot report yourself."}), 400
+
+    user_to_report = User.query.get(user_id)
+
+    # Checks if user exists
+    if not user_to_report:
+        return jsonify({"error": "User not found."}), 404
+
+    data = request.get_json()
+    reason = data.get("reason", "").strip()
+
+    # Required check
+    if not reason:
+        return jsonify({"error": "Reason is required."}), 400
+
+    # Length validation
+    if len(reason) < 5:
+        return jsonify({"error": "Reason too short."}), 400
+
+    # Duplicate report prevention
+    existing_report = Report.query.filter_by(
+        reporterID=current_user.userID,
+        reportedID=user_id
+    ).first()
+
+    if existing_report:
+        return jsonify({"error": "User already reported."}), 409
+
+    report = Report(
+        reporterID=current_user.userID,
+        reportedID=user_id,
+        reason=reason
+    )
+
+    db.session.add(report)
+    db.session.commit()
+
+    return jsonify({"message": "User reported successfully."}), 201
+
+
    
 ###
 # The functions below should be applicable to all Flask apps.

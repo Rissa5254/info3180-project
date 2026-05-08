@@ -4,9 +4,13 @@ import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import ChatView from '../views/ChatView.vue'
 import BrowseMatchesView from '../views/BrowseMatchesView.vue'
+import MatchesView from '../views/MatchesView.vue'
+import FavouritesView from '../views/FavouritesView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import NotificationsView from '../views/NotificationsView.vue'
+import BlockedUsersView from '../views/BlockedUsersView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,6 +53,30 @@ const router = createRouter({
       path: '/browse',
       name: 'BrowseMatches',
       component: BrowseMatchesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/matches',
+      name: 'Matches',
+      component: MatchesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/favourite',
+      name: 'Favourite',
+      component: FavouritesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: NotificationsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/blocked-users',
+      name: 'blocked-users',
+      component: BlockedUsersView,
       meta: { requiresAuth: true }
     }
   ]
