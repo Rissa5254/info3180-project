@@ -40,6 +40,12 @@
       <button class="favourite-btn" @click="$emit('favourite', profile.userID)">
         Favourite
       </button>
+      <button class="block-btn" @click="$emit('block', profile)">
+        Block
+      </button>
+      <button class="report-btn" @click="$emit('report', profile)">
+        Report
+      </button>
     </div>
 
     <!-- Message button — shown on matches page -->
@@ -58,7 +64,7 @@ defineProps({
   showMessage: { type: Boolean, default: false }
 })
 
-defineEmits(['action', 'message', 'favourite'])
+defineEmits(['action', 'message', 'favourite', 'block', 'report'])
 </script>
 
 <style scoped>
@@ -116,11 +122,12 @@ defineEmits(['action', 'message', 'favourite'])
 
 .card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
 }
 
-.like-btn, .pass-btn, .message-btn, .favourite-btn {
+.like-btn, .pass-btn, .message-btn, .favourite-btn, .block-btn, .report-btn {
   flex: 1;
   border: none;
   border-radius: 999px;
@@ -134,4 +141,6 @@ defineEmits(['action', 'message', 'favourite'])
 .pass-btn { background: #fee2e2; color: #b91c1c; }
 .message-btn { background: #ffe4e6; color: #be123c; }
 .favourite-btn {background: #fef3c7; color: #92400e;}
+.block-btn {background: #fee2e2; color: #991b1b;}
+.report-btn {background: #ffe4e6; color: #be123c;}
 </style>

@@ -1,6 +1,110 @@
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import api from '@/services/api'
+
+const conversations = ref([])
+const selectedUser = ref(null)
+const messages = ref([])
+const text = ref('')
+const error = ref('')
+const currentUserID =
+  JSON.parse(localStorage.getItem('authStore') || localStorage.getItem('user') || '{}')?.user?.userID ||
+  JSON.parse(localStorage.getItem('user') || '{}')?.userID
+
+let intervalId = null
+
+async function loadConversations() {
+  try {
+    error.value = ''
+    const response = await api.get('/conversations')
+    conversations.value = response.data
+
+    if (!selectedUser.value && conversations.value.length > 0) {
+      selectedUser.value = conversations.value[0]
+      await loadMessages()
+    }
+  } catch (err) {
+    error.value = err.response?.data?.error || err.message
+  }
+}
+
+async function loadMessages() {
+  if (!selectedUser.value) return
+
+  try {
+    error.value = ''
+    const response = await api.get(`/messages/${selectedUser.value.userID}`)
+    messages.value = response.data
+  } catch (err) {
+    error.value = err.response?.data?.error || err.message
+  }
+}
+
+async function selectConversation(user) {
+  selectedUser.value = user
+  messages.value = []
+  await loadMessages()
+}
+
+async function send() {
+  if (!text.value.trim() || !selectedUser.value) return
+
+  try {
+    error.value = ''
+
+    await api.post('/messages', {
+      receiver_id: selectedUser.value.userID,
+      content: text.value
+    })
+
+    text.value = ''
+    await loadMessages()
+  } catch (err) {
+    error.value = err.response?.data?.error || err.message
+  }
+}
+
+function formatTime(timestamp) {
+  if (!timestamp) return ''
+
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+onMounted(async () => {
+  await loadConversations()
+
+  intervalId = setInterval(() => {
+    loadMessages()
+  }, 3000)
+})
+
+onUnmounted(() => {
+  clearInterval(intervalId)
+})
+</script>
+
+
 <template>
   <div class="chat">
     <h2>Chat</h2>
+
+    <div class="conversation-list" v-if="conversations.length > 0">
+      <button
+        v-for="user in conversations"
+        :key="user.userID"
+        @click="selectConversation(user)"
+        :class="{ active: selectedUser?.userID === user.userID }"
+      >
+        {{ user.username }}
+      </button>
+    </div>
+
+    <p v-else class="empty">
+      No conversations yet.
+    </p>
 
     <p v-if="error" class="error">
       {{ error }}
@@ -12,7 +116,15 @@
         :key="msg.messageID"
         class="bubble"
       >
-        {{ msg.content }}
+        <strong class="sender">
+          {{ msg.sender_name || msg.sender_username || 'User' }}
+        </strong>
+
+        <p>{{ msg.content }}</p>
+
+        <span class="timestamp">
+          {{ formatTime(msg.timestamp) }}
+        </span>
       </div>
 
       <p v-if="messages.length === 0" class="empty">
@@ -20,7 +132,7 @@
       </p>
     </div>
 
-    <div class="input-row">
+    <div v-if="selectedUser" class="input-row">
       <input
         v-model="text"
         placeholder="Type a message..."
@@ -34,82 +146,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-
-const messages = ref([])
-const text = ref('')
-const error = ref('')
-
-const receiver = 2 // Replace later with dynamic receiver ID
-
-let intervalId = null
-
-async function load() {
-  try {
-    error.value = ''
-
-    const res = await fetch(`/api/messages/${receiver}`)
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to load messages')
-    }
-
-    messages.value = data
-  } catch (err) {
-    console.error(err)
-    error.value = err.message
-  }
-}
-
-async function send() {
-  if (!text.value.trim()) {
-    return
-  }
-
-  try {
-    error.value = ''
-
-    const res = await fetch('/api/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        receiver_id: receiver,
-        content: text.value
-      })
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to send message')
-    }
-
-    text.value = ''
-
-    await load()
-  } catch (err) {
-    console.error(err)
-    error.value = err.message
-  }
-}
-
-onMounted(() => {
-  load()
-
-  intervalId = setInterval(() => {
-    load()
-  }, 3000)
-})
-
-onUnmounted(() => {
-  clearInterval(intervalId)
-})
-</script>
 
 <style scoped>
 .chat {
@@ -132,12 +168,31 @@ onUnmounted(() => {
 }
 
 .bubble {
+  align-self: flex-start;
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 8px 14px;
+  border-radius: 14px;
+  padding: 10px 14px;
   max-width: 70%;
   font-size: 14px;
+}
+
+.bubble.mine {
+  align-self: flex-end;
+  background: #ffe4e6;
+  border-color: #fecdd3;
+}
+
+.bubble p {
+  margin: 0;
+}
+
+.timestamp {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #7f3148;
+  text-align: right;
 }
 
 .input-row {
@@ -162,6 +217,35 @@ onUnmounted(() => {
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+}
+
+.conversation-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.conversation-list button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #ffe4e6;
+  color: #be123c;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.conversation-list button.active {
+  background: #e11d48;
+  color: white;
+}
+
+.sender {
+  display: block;
+  margin-bottom: 4px;
+  color: #be123c;
+  font-size: 12px;
 }
 
 .error {

@@ -257,8 +257,8 @@ onMounted(() => {
   padding: 10px;
   border: none;
   cursor: pointer;
-  background-color: rgb(68, 68, 236);
-  border-radius: 5px;
+  background: linear-gradient(135deg, #fb7185, #e11d48);
+  border-radius: 8px;
 }
 .reset-btn:hover { background-color: rgb(163, 159, 159); }
 .profile-grid {

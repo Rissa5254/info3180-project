@@ -3,22 +3,21 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from .config import Config
-from app.routes import*
-from app.routes.messages import messages_bp
-
-app.register_blueprint(messages_bp)
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
+CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"])
+
 db = SQLAlchemy(app)
-# Instantiate Flask-Migrate library here
+
 migrate = Migrate(app, db)
 
-# Flask-Login login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+from app import models
 from app import views

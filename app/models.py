@@ -215,6 +215,11 @@ class Report(db.Model):
         self.reportedID = reportedID
         self.reason = reason
         
-        
+
+from app import login_manager
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
         
         

@@ -650,6 +650,13 @@ def send_message():
     )
 
     db.session.add(msg)
+
+    db.session.add(Notification(
+        userID=receiver_id,
+        type="message",
+        content=f"You received a new message from {current_user.first_name} {current_user.last_name}."
+    ))
+
     db.session.commit()
 
     return jsonify({"message": "Sent"}), 201
@@ -679,6 +686,8 @@ def get_messages(receiver_id):
         {
             "messageID": m.messageID,
             "senderID": m.senderID,
+            "sender_name": User.query.get(m.senderID).first_name,
+            "sender_username": User.query.get(m.senderID).username,
             "content": m.content,
             "timestamp": m.timestamp.isoformat()
         }
@@ -1100,5 +1109,5 @@ def add_header(response):
 @app.errorhandler(404)
 def page_not_found(error):
     """Custom 404 page."""
-    return render_template('404.html'), 404
+    return jsonify({"error": "Page not found"}), 404
 
