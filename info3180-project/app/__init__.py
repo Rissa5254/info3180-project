@@ -5,9 +5,6 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from .config import Config
 from app.routes import*
-from app.routes.messages import messages_bp
-
-app.register_blueprint(messages_bp)
 
 app = Flask(__name__)
 app.config.from_object(Config)
