@@ -125,6 +125,21 @@ async function submitReport() {
   }
 }
 
+async function saveFavourite(userID) {
+  error.value = ''
+  success.value = ''
+
+  try {
+    const response = await api.post('/favourites', {
+      saved_user_id: userID
+    })
+
+    success.value = response.data.message
+  } catch (err) {
+    error.value = err.response?.data?.error || 'Could not save favourite'
+  }
+}
+
 onMounted(() => {
   matchesStore.fetchDiscoveredProfiles()
 })
@@ -171,6 +186,7 @@ onMounted(() => {
         @action="handleAction"
         @block="openBlock"
         @report="openReport"
+        @favourite="saveFavourite"
       />
     </section>
 

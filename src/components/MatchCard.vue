@@ -29,13 +29,16 @@
       💚 Match Score: {{ profile.match_percentage }}%
     </p>
 
-    <!-- Like/Pass buttons — shown on browse page -->
+    <!-- Like/Pass and Favourite buttons — shown on browse page -->
     <div v-if="showActions" class="card-actions">
       <button class="pass-btn" @click="$emit('action', { userID: profile.userID, action: 'pass' })">
         ✕ Pass
       </button>
       <button class="like-btn" @click="$emit('action', { userID: profile.userID, action: 'like' })">
         💚 Like
+      </button>
+      <button class="favourite-btn" @click="$emit('favourite', profile.userID)">
+        Favourite
       </button>
     </div>
 
@@ -55,7 +58,7 @@ defineProps({
   showMessage: { type: Boolean, default: false }
 })
 
-defineEmits(['action', 'message'])
+defineEmits(['action', 'message', 'favourite'])
 </script>
 
 <style scoped>
@@ -117,7 +120,7 @@ defineEmits(['action', 'message'])
   margin-top: 10px;
 }
 
-.like-btn, .pass-btn, .message-btn {
+.like-btn, .pass-btn, .message-btn, .favourite-btn {
   flex: 1;
   border: none;
   border-radius: 999px;
@@ -130,4 +133,5 @@ defineEmits(['action', 'message'])
 .like-btn { background: #dcfce7; color: #15803d; }
 .pass-btn { background: #fee2e2; color: #b91c1c; }
 .message-btn { background: #ffe4e6; color: #be123c; }
+.favourite-btn {background: #fef3c7; color: #92400e;}
 </style>

@@ -811,30 +811,80 @@ def search_users():
     
 
 @app.route('/api/favourites', methods=['POST'])
+@login_required
 def favourite_profile():
-    data = request.json
-    
+    data = request.get_json()
+
+    saved_user_id = data.get("saved_user_id")
+
+    if not saved_user_id:
+        return jsonify({"error": "saved_user_id is required."}), 400
+
+    if saved_user_id == current_user.userID:
+        return jsonify({"error": "You cannot favourite yourself."}), 400
+
+    saved_user = User.query.get(saved_user_id)
+
+    if not saved_user:
+        return jsonify({"error": "User not found."}), 404
+
+    existing_favourite = Favourite.query.filter_by(
+        userID=current_user.userID,
+        saved_user_id=saved_user_id
+    ).first()
+
+    if existing_favourite:
+        return jsonify({"error": "Profile already favourited."}), 409
+
     favourite = Favourite(
-        user_id=data["userID"],
-        saved_user_id=data["saved_user_id"]
+        userID=current_user.userID,
+        saved_user_id=saved_user_id
     )
+
     db.session.add(favourite)
     db.session.commit()
-    
-    return jsonify({"message": "Favourite profiles saved."}), 201
 
-@app.route('/api/favourites/<int:userID>', methods=['GET'])
-def get_favourite(userID):
-    favourites = Favourite.query.filter_by(userID=userID).all()
-    
-    results = [
-        {
-        "saved_user_id": f.saved_user_id
-        }
-        for f in favourites 
-    ]
-    
-    return jsonify(results)  
+    return jsonify({"message": "Favourite profile saved."}), 201
+
+
+@app.route('/api/favourites', methods=['GET'])
+@login_required
+def get_favourites():
+    favourites = Favourite.query.filter_by(userID=current_user.userID).all()
+
+    results = []
+
+    for favourite in favourites:
+        user = User.query.get(favourite.saved_user_id)
+
+        if user:
+            results.append({
+                "userID": user.userID,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "bio": user.bio,
+                "profile_picture": user.profile_picture
+            })
+
+    return jsonify(results), 200
+
+
+@app.route('/api/favourites/<int:saved_user_id>', methods=['DELETE'])
+@login_required
+def remove_favourite(saved_user_id):
+    favourite = Favourite.query.filter_by(
+        userID=current_user.userID,
+        saved_user_id=saved_user_id
+    ).first()
+
+    if not favourite:
+        return jsonify({"error": "Favourite not found."}), 404
+
+    db.session.delete(favourite)
+    db.session.commit()
+
+    return jsonify({"message": "Favourite removed successfully."}), 200  
     
 
 # 5. Notification
