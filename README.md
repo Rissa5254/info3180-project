@@ -16,7 +16,7 @@ This project will reinforce key concepts learned in INFO3180 including:
 - Marissa O'Meally - Project Manager
 - Gabriel Smith -
 - Seantay Johnson - 
-- Deshawn Matthews -
+- Deshawn Matthews -Backend & frontend dev
 - Kevon Haughton -
 
 
