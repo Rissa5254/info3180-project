@@ -2,47 +2,112 @@
   <div class="chat">
     <h2>Chat</h2>
 
+    <p v-if="error" class="error">
+      {{ error }}
+    </p>
+
     <div class="messages">
-      <div v-for="msg in messages" :key="msg.timestamp" class="bubble">
+      <div
+        v-for="msg in messages"
+        :key="msg.messageID"
+        class="bubble"
+      >
         {{ msg.content }}
       </div>
+
+      <p v-if="messages.length === 0" class="empty">
+        No messages yet.
+      </p>
     </div>
 
     <div class="input-row">
-      <input v-model="text" placeholder="Type a message..." @keydown.enter="send" />
-      <button @click="send">Send</button>
+      <input
+        v-model="text"
+        placeholder="Type a message..."
+        @keydown.enter="send"
+      />
+
+      <button @click="send">
+        Send
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const messages = ref([])
 const text = ref('')
-const receiver = 2 // replace later
+const error = ref('')
+
+const receiver = 2 // Replace later with dynamic receiver ID
+
+let intervalId = null
 
 async function load() {
-  const res = await fetch(`/api/messages/${receiver}`)
-  messages.value = await res.json()
+  try {
+    error.value = ''
+
+    const res = await fetch(`/api/messages/${receiver}`)
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to load messages')
+    }
+
+    messages.value = data
+  } catch (err) {
+    console.error(err)
+    error.value = err.message
+  }
 }
 
 async function send() {
-  await fetch('/api/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      receiver_id: receiver,
-      content: text.value
+  if (!text.value.trim()) {
+    return
+  }
+
+  try {
+    error.value = ''
+
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        receiver_id: receiver,
+        content: text.value
+      })
     })
-  })
-  text.value = ''
-  load()
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to send message')
+    }
+
+    text.value = ''
+
+    await load()
+  } catch (err) {
+    console.error(err)
+    error.value = err.message
+  }
 }
 
 onMounted(() => {
   load()
-  setInterval(load, 3000)
+
+  intervalId = setInterval(() => {
+    load()
+  }, 3000)
+})
+
+onUnmounted(() => {
+  clearInterval(intervalId)
 })
 </script>
 
@@ -97,5 +162,16 @@ onMounted(() => {
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+}
+
+.error {
+  color: red;
+  margin-bottom: 10px;
+}
+
+.empty {
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
 }
 </style>
