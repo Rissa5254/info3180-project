@@ -1,21 +1,24 @@
 <template>
     <div class="favourite-page">
-        <h1> Saved Favourite Profiles</h1>
+        <section class="favourite-header">
+            <h1>Saved Favourite Profiles</h1>
+        </section>
 
         <p v-if="loading">Loading profiles...</p>
         <p v-if="error" class="error">{{ error }}</p>
         
-        <div v-if="!loading && favouriteProfiles.length === 0" >
-            <h2>No favourites profiles found.</h2>
+        <div v-if="favouriteProfiles.length === 0" class="empty-state">
+            <h3>No favourites profiles found.</h3>
         </div>
 
-        <div class="grid" v-else>
+        <div v-else class="grid">
             <div v-for="user in favouriteProfiles" :key="user.userID" class="card">
+                 <button @click="removeFavourite(user.userID)">Remove</button>
+            </div>
+            <div class="info">
                 <h3>{{ user.name }}</h3>
                 <p>{{ user.age }} years old</p>
                 <p>{{ user.location }}</p>
-
-                <button @click="removeFavourite(user.userID)">Remove</button>
             </div>
         </div>
     </div>
@@ -72,6 +75,16 @@ onMounted(() => {
   padding: 20px;
 }
 
+.favourite-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.favourite-header h1 {
+  color: #9f1239;
+  margin-bottom: 8px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -86,5 +99,15 @@ onMounted(() => {
 
 .error {
   color: red;
+}
+
+.empty-state {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.96);
+  max-width: 480px;
+  margin: 0 auto 28px;
+  padding: 28px;
+  border: 1px solid rgba(251, 113, 133, 0.16);
+  border-radius: 14px;
 }
 </style>

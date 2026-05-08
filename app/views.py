@@ -557,7 +557,6 @@ def get_match_count():
     return jsonify({"match_count": count}), 200
 
 
-
 # 3. User Connections and Messaging
 @app.route('/api/messages', methods=['POST'])
 @login_required
