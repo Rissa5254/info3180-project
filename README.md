@@ -13,11 +13,11 @@ This project will reinforce key concepts learned in INFO3180 including:
 
 
 ## Team Member Names and Roles
-- Marissa O'Meally - Project Manager
+- Marissa O'Meally - Project Manager and Frontend Developer
 - Gabriel Smith - Backend and Frontend Developer
-- Seantay Johnson - 
-- Deshawn Matthews -Backend & frontend dev
-- Kevon Haughton -
+- Seantay Johnson - Backend and Frontend Developer
+- Deshawn Matthews -Backend and Frontend Developer
+- Kevon Haughton - Backend and Frontend Developer
 
 
 ## Setup Instructions (clear, step-by-step) 
