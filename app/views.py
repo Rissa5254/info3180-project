@@ -34,7 +34,7 @@ def calculate_age(dob):
         (today.month, today.day) < (dob.month, dob.day)
     )
 
-@app.route('/')
+@app.route('/api')
 def index():
     return jsonify(message="This is the beginning of our API")
 
@@ -1106,8 +1106,8 @@ def add_header(response):
     return response
 
 
-@app.errorhandler(404)
-def page_not_found(error):
-    """Custom 404 page."""
-    return jsonify({"error": "Page not found"}), 404
+# @app.errorhandler(404)
+# def page_not_found(error):
+#     """Custom 404 page."""
+#     return jsonify({"error": "Page not found"}), 404
 
