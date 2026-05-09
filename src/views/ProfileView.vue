@@ -196,7 +196,7 @@ const response = await api.put('/profile', {
 
         <div v-if="profilePicture" class="preview-box">
           <img
-            :src="`/static/uploads/${profilePicture}`"
+           :src="`/uploads/${user.profile_picture}`"
             alt="Profile picture"
             class="profile-preview"
           />

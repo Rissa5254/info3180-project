@@ -8,7 +8,7 @@ This file creates your application.
 import os
 from app import app, db
 from datetime import date, datetime, timezone, timedelta
-from flask import flash, current_app, render_template, request, session, jsonify
+from flask import flash, current_app, render_template, request, session, jsonify, send_from_directory
 from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash
@@ -20,6 +20,11 @@ from app.models import User, Location, Interest, User_Interest, Match, Message, 
 # Routing for your application.
 ###
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
