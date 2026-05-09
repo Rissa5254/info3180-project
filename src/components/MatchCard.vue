@@ -3,7 +3,7 @@
     <!-- Profile Picture -->
     <img
       v-if="profile.profile_picture"
-      :src="`http://localhost:5000/static/uploads/${profile.profile_picture}`"
+     :src="`/static/uploads/${profile.profile_picture}`"
       alt="Profile picture"
       class="profile-img"
     />

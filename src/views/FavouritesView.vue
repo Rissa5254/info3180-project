@@ -57,7 +57,7 @@ onMounted(loadFavourites)
       <article v-for="user in favouriteProfiles" :key="user.userID" class="card">
         <img
           v-if="user.profile_picture"
-          :src="`http://localhost:5000/static/uploads/${user.profile_picture}`"
+          :src="`/static/uploads/${user.profile_picture}`"
           alt="Profile picture"
           class="profile-img"
         />
