@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
+import { getProfilePictureUrl } from '@/utils/profilePictures'
 
 const favouriteProfiles = ref([])
 const error = ref('')
@@ -57,7 +58,7 @@ onMounted(loadFavourites)
       <article v-for="user in favouriteProfiles" :key="user.userID" class="card">
         <img
           v-if="user.profile_picture"
-          :src="`/uploads/${user.profile_picture}`"
+          :src="getProfilePictureUrl(user.profile_picture)"
           alt="Profile picture"
           class="profile-img"
         />

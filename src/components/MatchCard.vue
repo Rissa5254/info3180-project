@@ -3,7 +3,7 @@
     <!-- Profile Picture -->
     <img
       v-if="profile.profile_picture"
-     :src="`/static/uploads/${profile.profile_picture}`"
+      :src="getProfilePictureUrl(profile.profile_picture)"
       alt="Profile picture"
       class="profile-img"
     />
@@ -58,6 +58,8 @@
 </template>
 
 <script setup>
+import { getProfilePictureUrl } from '@/utils/profilePictures'
+
 defineProps({
   profile: { type: Object, required: true },
   showActions: { type: Boolean, default: false },

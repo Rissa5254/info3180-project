@@ -6,6 +6,7 @@ This file creates your application.
 """
 
 import os
+from uuid import uuid4
 from app import app, db
 from datetime import date, datetime, timezone, timedelta
 from flask import flash, current_app, render_template, request, session, jsonify, send_from_directory
@@ -381,7 +382,9 @@ def upload_profile_picture():
     if not allowed_file(file.filename):
         return jsonify({"error": "Only png, jpg, jpeg, and webp files are allowed."}), 400
 
-    filename = secure_filename(file.filename)
+    original_filename = secure_filename(file.filename)
+    extension = os.path.splitext(original_filename)[1].lower()
+    filename = "{}_{}{}".format(current_user.userID, uuid4().hex, extension)
 
     upload_folder = current_app.config['UPLOAD_FOLDER']
     os.makedirs(upload_folder, exist_ok=True)

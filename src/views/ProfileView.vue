@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import api from '@/services/api'
+import { getProfilePictureUrl } from '@/utils/profilePictures'
 
 const form = ref({
   first_name: '',
@@ -194,9 +195,9 @@ const response = await api.put('/profile', {
       <div class="form-group">
         <label>Profile Picture</label>
 
-        <div v-if="profilePicture" class="preview-box">
-          <img
-           :src="`/uploads/${user.profile_picture}`"
+         <div v-if="profilePicture" class="preview-box">
+           <img
+            :src="getProfilePictureUrl(profilePicture)"
             alt="Profile picture"
             class="profile-preview"
           />
