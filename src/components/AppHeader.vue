@@ -42,6 +42,7 @@ async function handleLogout() {
 
         <template v-if="isAuthenticated">
           <RouterLink class="nav-link" to="/browse"> Browse</RouterLink>
+          <RouterLink class="nav-link" to="/matches"> Matches</RouterLink>
           <RouterLink class="nav-link" to="/favourite"> Favourite</RouterLink>
           <RouterLink class="nav-link" to="/chat"> Chat</RouterLink>
           <RouterLink class="nav-link" to="/notifications"> Notifications</RouterLink>
