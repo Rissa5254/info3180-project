@@ -4,12 +4,12 @@
 In this group project, you will develop a DATING APPLICATION web platform (called DriftDater) that allows registered users to create detailed profiles, discover compatible matches, and initiate connections with other users. The application will be built using Vue 3 frontend framework and Flask backend API, with a database to store user profiles and matching information. 
 
 This project will reinforce key concepts learned in INFO3180 including: 
-• Relational database design 
-• RESTful API development 
-• Authentication and authorization 
-• Frontend-backend integration 
-• User interface/user experience design 
-• Testing and deployment procedures 
+- Relational database design 
+- RESTful API development 
+- Authentication and authorization 
+- Frontend-backend integration 
+- User interface/user experience design 
+- Testing and deployment procedures 
 
 
 ## Team Member Names and Roles
